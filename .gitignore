@@ -1,7 +1,5 @@
 log/
 carla/
-data/*
-model_ckpt/*
 late_fusion/
 geometric_fusion/
 results/
