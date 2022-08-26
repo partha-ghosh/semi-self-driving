@@ -2,6 +2,7 @@ log/
 carla/
 data/
 model_ckpt/
+late_fusion/
 results/
 saved_results/
 vis/**/
@@ -9,7 +10,7 @@ test/
 test2/
 *.out
 *.err
-./shell_scripts/*
+shell_scripts/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
