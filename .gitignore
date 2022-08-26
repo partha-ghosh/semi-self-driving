@@ -9,6 +9,7 @@ test/
 test2/
 *.out
 *.err
+shell_scripts/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
