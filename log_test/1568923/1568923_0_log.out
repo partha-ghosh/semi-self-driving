@@ -1,0 +1,12 @@
+submitit INFO (2022-06-27 20:44:07,402) - Starting with JobEnvironment(job_id=1568923, hostname=slurm-bm-49.novalocal, local_rank=0(1), node=0(1), global_rank=0(1))
+submitit INFO (2022-06-27 20:44:07,402) - Loading pickle: /mnt/qb/work/geiger/pghosh58/transfuser/log_test/1568923/1568923_submitted.pkl
+
+
+
+
+===============================
+Training Baseline AIM with DINO
+===============================
+
+4.24.3-0+++UE4+Release-4.24 518 0
+Disabling core dumps.

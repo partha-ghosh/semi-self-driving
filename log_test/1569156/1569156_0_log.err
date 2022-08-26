@@ -1,0 +1,2 @@
+srun: error: slurm-bm-27: task 0: User defined signal 1
+srun: launch/slurm: _step_signal: Terminating StepId=1569156.0

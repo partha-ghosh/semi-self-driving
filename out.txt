@@ -1,0 +1,30 @@
+JobId=1648307 JobName=CILRS
+   UserId=pghosh58(4488) GroupId=geiger(4009) MCS_label=N/A
+   Priority=36740 Nice=0 Account=geiger QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=1-00:00:00 TimeMin=N/A
+   SubmitTime=2022-07-23T07:59:45 EligibleTime=2022-07-23T07:59:45
+   AccrueTime=2022-07-23T07:59:45
+   StartTime=2022-07-23T07:59:59 EndTime=2022-07-24T07:59:59 Deadline=N/A
+   PreemptEligibleTime=2022-07-23T08:00:59 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2022-07-23T07:59:59
+   Partition=gpu-2080ti AllocNode:Sid=bg-slurmb-1:736685
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=slurm-bm-27
+   BatchHost=slurm-bm-27
+   NumNodes=1 NumCPUs=8 NumTasks=1 CPUs/Task=8 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=8,mem=32G,node=1,billing=2,gres/gpu=1,gres/gpu:rtx2080ti=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=8 MinMemoryNode=32G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/mnt/qb/work/geiger/pghosh58/transfuser/run.sh
+   WorkDir=/mnt/qb/work/geiger/pghosh58/transfuser
+   StdErr=/mnt/qb/work/geiger/pghosh58/transfuser/1648307.err
+   StdIn=/dev/null
+   StdOut=/mnt/qb/work/geiger/pghosh58/transfuser/1648307.out
+   Power=
+   TresPerNode=gpu:rtx2080ti:1
+   NtasksPerTRES:0
+

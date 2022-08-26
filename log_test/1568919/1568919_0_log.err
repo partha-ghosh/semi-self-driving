@@ -1,0 +1,15 @@
+sh: xdg-user-dir: command not found
+mv: cannot stat ‘log/aim_dino_all_town_e50_b128_06_27_20_41’: No such file or directory
+Traceback (most recent call last):
+  File "train.py", line 10, in <module>
+    from torch.utils.tensorboard import SummaryWriter
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/torch/utils/tensorboard/__init__.py", line 1, in <module>
+    import tensorboard
+ModuleNotFoundError: No module named 'tensorboard'
+mv: cannot move ‘train.txt’ to ‘log/aim’: No such file or directory
+mv: cannot stat ‘log/aim’: No such file or directory
+rm: cannot remove ‘/mnt/qb/work/geiger/pghosh58/transfuser/model_ckpt/aim/best_model.pth’: No such file or directory
+cp: cannot stat ‘/mnt/qb/work/geiger/pghosh58/transfuser/aim_dino/log/aim_dino_all_town_e50_b128_06_27_20_41/best_model.pth’: No such file or directory
+tee: /mnt/qb/work/geiger/pghosh58/transfuser/aim_dino/log/aim_dino_all_town_e50_b128_06_27_20_41/eval.txt: No such file or directory
+slurmstepd: error: *** STEP 1568919.0 ON slurm-bm-49 CANCELLED AT 2022-06-27T20:42:42 DUE TO TIME LIMIT ***
+slurmstepd: error: *** JOB 1568919 ON slurm-bm-49 CANCELLED AT 2022-06-27T20:42:42 DUE TO TIME LIMIT ***

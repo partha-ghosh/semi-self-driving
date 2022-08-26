@@ -1,0 +1,49 @@
+sh: xdg-user-dir: command not found
+mv: cannot stat ‘log/aim_dino_all_town_e50_b128_06_27_20_35’: No such file or directory
+Traceback (most recent call last):
+  File "train.py", line 10, in <module>
+    from torch.utils.tensorboard import SummaryWriter
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/torch/utils/tensorboard/__init__.py", line 1, in <module>
+    import tensorboard
+ModuleNotFoundError: No module named 'tensorboard'
+mv: cannot move ‘train.txt’ to ‘log/aim’: No such file or directory
+mv: cannot stat ‘log/aim’: No such file or directory
+rm: cannot remove ‘/mnt/qb/work/geiger/pghosh58/transfuser/model_ckpt/aim/best_model.pth’: No such file or directory
+cp: cannot stat ‘/mnt/qb/work/geiger/pghosh58/transfuser/aim_dino/log/aim_dino_all_town_e50_b128_06_27_20_35/best_model.pth’: No such file or directory
+tee: /mnt/qb/work/geiger/pghosh58/transfuser/aim_dino/log/aim_dino_all_town_e50_b128_06_27_20_35/eval.txt: No such file or directory
+submitit WARNING (2022-06-27 20:37:42,985) - Bypassing signal SIGCONT
+submitit WARNING (2022-06-27 20:37:42,990) - Caught signal SIGUSR1 on slurm-bm-49.novalocal: this job is timed-out.
+submitit ERROR (2022-06-27 20:37:43,021) - Submitted job triggered an exception
+Traceback (most recent call last):
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/utils.py", line 334, in __call__
+    copy_process_streams(process, stdout_buffer, stderr_buffer, self.verbose)
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/utils.py", line 259, in copy_process_streams
+    ready, _, _ = select.select(fds, [], [])
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/job_environment.py", line 210, in checkpoint_and_try_requeue
+    raise utils.UncompletedJobError(message)
+submitit.core.utils.UncompletedJobError: Job not requeued because: timed-out and not checkpointable.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/runpy.py", line 193, in _run_module_as_main
+    "__main__", mod_spec)
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/_submit.py", line 11, in <module>
+    submitit_main()
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/submission.py", line 72, in submitit_main
+    process_job(args.folder)
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/submission.py", line 65, in process_job
+    raise error
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/submission.py", line 54, in process_job
+    result = delayed.result()
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/utils.py", line 133, in result
+    self._result = self.function(*self.args, **self.kwargs)
+  File "run.py", line 90, in run_test
+    return function()
+  File "/mnt/qb/work/geiger/pghosh58/conda/pkgs/transfuser/lib/python3.7/site-packages/submitit/core/utils.py", line 338, in __call__
+    raise FailedJobError("Job got killed for an unknown reason.") from e
+submitit.core.utils.FailedJobError: Job got killed for an unknown reason.
+srun: error: slurm-bm-49: task 0: Exited with exit code 1
+srun: launch/slurm: _step_signal: Terminating StepId=1568917.0

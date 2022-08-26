@@ -1,3 +1,15 @@
+log/
+carla/
+data/
+model_ckpt/
+results/
+saved_results/
+vis/**/
+test/
+test2/
+*.out
+*.err
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,60 @@
+Collect data for self-supervised training
+Preloading 9413 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town01_tiny/rg_cilrs_pl_1_0.npy
+Preloading 10133 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town01_short/rg_cilrs_pl_1_0.npy
+Preloading 7241 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town02_tiny/rg_cilrs_pl_1_0.npy
+Preloading 2808 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town02_short/rg_cilrs_pl_1_0.npy
+Preloading 15467 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town03_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9457 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town03_short/rg_cilrs_pl_1_0.npy
+Preloading 17148 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town04_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9594 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town04_short/rg_cilrs_pl_1_0.npy
+Preloading 8016 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town06_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9154 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town06_short/rg_cilrs_pl_1_0.npy
+Preloading 4283 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town07_tiny/rg_cilrs_pl_1_0.npy
+Preloading 5271 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town07_short/rg_cilrs_pl_1_0.npy
+Preloading 5800 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town10_tiny/rg_cilrs_pl_1_0.npy
+Preloading 3153 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town10_short/rg_cilrs_pl_1_0.npy
+Preloading 8222 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town05_short/rg_cilrs_pl_1_0.npy
+Total trainable parameters:  12693331
+Created dir: log/cilrs
+Epoch 001, Batch 032: Vel: 0.019 Str: 0.043 Thr: 0.259 Brk: 0.218
+====== Saved recent model ======>
+====== Overwrote best model ======>
+Self-supervised Training
+Preloading 9413 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town01_tiny/rg_cilrs_pl_1_0.npy
+Preloading 10133 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town01_short/rg_cilrs_pl_1_0.npy
+Preloading 7241 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town02_tiny/rg_cilrs_pl_1_0.npy
+Preloading 2808 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town02_short/rg_cilrs_pl_1_0.npy
+Preloading 15467 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town03_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9457 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town03_short/rg_cilrs_pl_1_0.npy
+Preloading 17148 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town04_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9594 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town04_short/rg_cilrs_pl_1_0.npy
+Preloading 35677 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/ssd_data/rg_cilrs_pl_1_0.npy
+Preloading 8016 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town06_tiny/rg_cilrs_pl_1_0.npy
+Preloading 9154 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town06_short/rg_cilrs_pl_1_0.npy
+Preloading 4283 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town07_tiny/rg_cilrs_pl_1_0.npy
+Preloading 5271 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town07_short/rg_cilrs_pl_1_0.npy
+Preloading 5800 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town10_tiny/rg_cilrs_pl_1_0.npy
+Preloading 3153 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town10_short/rg_cilrs_pl_1_0.npy
+Preloading 8222 sequences from /home/scholar/tmp/ssd/transfuser/data/14_weathers_minimal_data/Town05_short/rg_cilrs_pl_1_0.npy
+Total trainable parameters:  12693331
+Created dir: log/cilrs
+
+
+
+
+
+
+=================================================================================
+SSD-CILRS: Training with the new data and Evaluating and Collecting psuedo labels
+=================================================================================
+
+
+
+
+
+
+
+==================================================
+SSD-CILRS: Self-supervised training and Evaluating
+==================================================
+
