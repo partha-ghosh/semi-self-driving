@@ -10,7 +10,6 @@ test/
 test2/
 *.out
 *.err
-shell_scripts/*
 log_test
 
 # Byte-compiled / optimized / DLL files
