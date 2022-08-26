@@ -1,2 +1,0 @@
-srun: error: slurm-bm-16: task 0: User defined signal 1
-srun: launch/slurm: _step_signal: Terminating StepId=1569172.0
