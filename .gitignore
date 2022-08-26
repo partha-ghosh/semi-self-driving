@@ -2,6 +2,7 @@ log/
 carla/
 late_fusion/
 geometric_fusion/
+transfuser/
 results/
 saved_results/
 vis/**/
