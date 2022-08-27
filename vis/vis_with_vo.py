@@ -49,22 +49,27 @@ def calc_wp(seq_x, seq_y, seq_theta):
         waypoints.append(tuple(local_waypoint[0,:2]))
     return waypoints
 
-pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence/log/aim_confidenece:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
-# pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence_from_gt/log/aim_confidence_from_gt:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
-
-n = len(pseudo_labels.item()['front'])
-
-flag = True
-while flag:
-    ri = np.random.randint(0, n)
-    flag = True if (
-        ('town01' in pseudo_labels.item()['front'][ri][0]) or \
-        ('town02' in pseudo_labels.item()['front'][ri][0]) or \
-        ('town03' in pseudo_labels.item()['front'][ri][0]) or \
-        ('town04' in pseudo_labels.item()['front'][ri][0])
-        ) else False
+# pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence/log/aim_confidenece:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
+pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence_from_gt/log/aim_confidence_from_gt:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
+pseudo_labels_vo = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/test/poseconvgrut4l1/psuedo_waypoints.npy', allow_pickle=True)
 
 
+def find_ri():
+    n = len(pseudo_labels.item()['front'])
+    flag = True
+    while flag:
+        ri = np.random.randint(0, n)
+        flag = True if (
+            ('town01' in pseudo_labels.item()['front'][ri][0]) or \
+            ('town02' in pseudo_labels.item()['front'][ri][0]) or \
+            ('town03' in pseudo_labels.item()['front'][ri][0]) or \
+            ('town04' in pseudo_labels.item()['front'][ri][0])
+            ) else False
+    return ri
+
+ri = find_ri()
+
+M = np.array([[0, 1], [-1, 0]])
 
 index = None
 save_index = 0
@@ -75,7 +80,8 @@ while True:
             ri = pseudo_labels.item()['front'].index([scene])
         except:
             # exit()
-            ri = np.random.randint(0, n)
+            ri = find_ri()
+
 
     scene = pseudo_labels.item()['front'][ri][0]
     index = int(scene[-8:-4])
@@ -84,6 +90,13 @@ while True:
 
     pred_wp = pseudo_labels.item()['waypoints'][ri]
     pred_confidence = pseudo_labels.item()['confidence'][ri]
+
+    try:
+        pred_wp_vo = np.array(pseudo_labels_vo.item()[scene]['waypoints'])
+        pred_wp_vo = (M @ pred_wp_vo.T).T
+    except:
+        scene = None
+        continue
 
     seq_len = 1
     pred_len = 4
@@ -102,6 +115,9 @@ while True:
     pred_wp_x = [p[0] for p in pred_wp]
     pred_wp_y = [p[1] for p in pred_wp]
 
+    pred_wp_vo_x = [p[0] for p in pred_wp_vo]
+    pred_wp_vo_y = [p[1] for p in pred_wp_vo]
+
     gt_wp_x = [p[0] for p in gt_wp]
     gt_wp_y = [p[1] for p in gt_wp]
 
@@ -111,6 +127,7 @@ while True:
 
     plt.subplot(1,2,2)
     plt.scatter(pred_wp_x, pred_wp_y, label=f"pseudo {pred_confidence}", alpha=0.5)
+    plt.scatter(pred_wp_vo_x, pred_wp_vo_y, label=f"pseudo vo", alpha=0.5)
     plt.scatter(gt_wp_x, gt_wp_y, label="gt", alpha=0.5)
     plt.ylim([-15, 0])
     plt.xlim([-7,7])

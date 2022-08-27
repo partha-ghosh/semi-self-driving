@@ -1,37 +1,95 @@
 from run_utils import *
 
-root = '/mnt/qb/work/geiger/pghosh58/transfuser'
+root = os.path.dirname(os.path.abspath(__file__))
 exp_time = datetime.datetime.now().strftime("%m_%d_%H_%M")
 
 tests = [
-    [
-        {
-            "name": "train_n_collect",
-            "dir": f"{root}/ssd/aim",
-            "sst": 0,
-            "agent_name": "aim_agent",
-            "epochs": 1,
-            "batch_size": 64,
-        },
-        {
-            "name": "self_supervised",
-            "dir": f"{root}/ssd/aim",
-            "sst": 1,
-            "agent_name": "aim_agent",
-            "epochs": 2,
-            "batch_size": 64,
-        }
-    ],
-
+    # AIM Baseline
     # [
-        # {
-        #     "name": "aim_confidenece:train_n_collect",
-        #     "dir": f"{root}/ssd/aim_confidence",
-        #     "sst": 0,
-        #     "agent_name": "aim_confidence_agent",
-        #     "epochs": 60,
-        #     "batch_size": 64,
-        # },
+    #     {
+    #         "name": "train_n_collect",
+    #         "dir": f"{root}/ssd/aim",
+    #         "sst": 0,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 1,
+    #         "batch_size": 64,
+    #     },
+    #     {
+    #         "name": "self_supervised",
+    #         "dir": f"{root}/ssd/aim",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 1,
+    #         "batch_size": 64,
+    #     }
+    # ],
+
+    # AIM Noise
+    # [
+    #     {
+    #         "name": "aim_noise:supervised_training",
+    #         "dir": f"{root}/ssd/aim_noise",
+    #         "sst": 0,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     },
+    #     {
+    #         "name": "aim_noise:self_supervised_training_1",
+    #         "dir": f"{root}/ssd/aim_noise",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     },
+    #     {
+    #         "name": "aim_noise:self_supervised_training_2",
+    #         "dir": f"{root}/ssd/aim_noise",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     }
+    # ],
+
+    # AIM No Noise
+    # [
+    #     {
+    #         "name": "aim_no_noise:supervised_training",
+    #         "dir": f"{root}/ssd/aim_no_noise",
+    #         "sst": 0,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     },
+    #     {
+    #         "name": "aim_no_noise:self_supervised_training_1",
+    #         "dir": f"{root}/ssd/aim_no_noise",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     },
+    #     {
+    #         "name": "aim_no_noise:self_supervised_training_2",
+    #         "dir": f"{root}/ssd/aim_no_noise",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     }
+    # ],
+
+    # AIM Confidence
+    # [
+    #     {
+    #         "name": "aim_confidenece:train_n_collect",
+    #         "dir": f"{root}/ssd/aim_confidence",
+    #         "sst": 0,
+    #         "agent_name": "aim_confidence_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     },
     #     {
     #         "name": "aim_confidenece:self_supervised",
     #         "dir": f"{root}/ssd/aim",
@@ -42,6 +100,7 @@ tests = [
     #     }
     # ],
 
+    # AIM Confidence from GT
     # [
     #     {
     #         "name": "aim_confidence_from_gt:train_n_collect",
@@ -60,7 +119,19 @@ tests = [
     #         "batch_size": 64,
     #     }
     # ],
-
+    
+    # AIM VO
+    # [
+    #     {
+    #         "name": "aim_vo",
+    #         "dir": f"{root}/ssd/aim_vo",
+    #         "sst": '',
+    #         "agent_name": "aim_agent",
+    #         "epochs": 60,
+    #         "batch_size": 64,
+    #     }
+    # ],
+    
     # {
     #     "name": "modified_aim_all_town_e50_b128",
     #     "dir": f"{root}/ssd/aim",
@@ -77,14 +148,7 @@ tests = [
     #     "epochs": 50,
     #     "batch_size": 64,
     # }],
-    # [{
-    #     "name": "aim_vo",
-    #     "dir": f"{root}/ssd/aim_vo",
-    #     "sst": '',
-    #     "agent_name": "aim_agent",
-    #     "epochs": 60,
-    #     "batch_size": 64,
-    # }],
+    
     # [{
     #     "name": "aim_all_town",
     #     "dir": f"{root}/aim",
@@ -113,9 +177,9 @@ def run_test(tests):
             f'{f"cp -r /mnt/qb/work/geiger/pghosh58/transfuser/data/processed/ssd_data log/{test_name}/" if not test["sst"] else "echo"}',
 
             # 3 evaluations
-            # f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
-            # f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
-            # f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
+            f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
+            f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
+            f'python {root}/tools/sbatch_submitter.py "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_{test_name}.sh"',
 
             f'mv {test["dir"]}/log/$SLURM_JOB_ID.out {test["dir"]}/log/{test_name}/',
             f'mv {test["dir"]}/log/$SLURM_JOB_ID.err {test["dir"]}/log/{test_name}/',

@@ -230,11 +230,11 @@ class Engine(object):
 config = GlobalConfig(train_with_ssd_data=args.sst)
 
 # Data
-train_set = CARLA_Data(root=config.train_data, config=config)
-ssd_set = CARLA_Data(root=config.ssd_data, config=config)
-val_set = CARLA_Data(root=config.val_data, config=config)
+# train_set = CARLA_Data(root=config.train_data, config=config)
+ssd_set = CARLA_Data(root=config.ssd_data, config=config, is_imgaug=False)
+val_set = CARLA_Data(root=config.val_data, config=config, is_imgaug=False)
 
-dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
+# dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 dataloader_ssd = DataLoader(ssd_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 dataloader_val = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
 
@@ -280,25 +280,27 @@ with open(os.path.join(args.logdir, 'args.txt'), 'w') as f:
 
 if config.train_with_ssd_data:
 	print("Training with Pseudolabels")
-	train_set = CARLA_Data(root=config.ssd_train_data, config=config)
-	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-	for epoch in range(trainer.cur_epoch, args.epochs//2): 
-		trainer.train()
-		if epoch % args.val_every == 0: 
-			trainer.validate()
-			trainer.save()
-	print("Fine Tuning")
-	train_set = CARLA_Data(root=config.train_data, config=config)
+	train_set = CARLA_Data(root=(config.ssd_train_data+config.train_data), config=config, is_imgaug=True)
 	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 	for epoch in range(trainer.cur_epoch, args.epochs): 
 		trainer.train()
 		if epoch % args.val_every == 0: 
 			trainer.validate()
 			trainer.save()
+	print("Collect Labels")
+	trainer.get_labels()
+	# print("Fine Tuning")
+	# train_set = CARLA_Data(root=config.train_data, config=config)
+	# dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
+	# for epoch in range(trainer.cur_epoch, args.epochs): 
+	# 	trainer.train()
+	# 	if epoch % args.val_every == 0: 
+	# 		trainer.validate()
+	# 		trainer.save()
 
 if not config.train_with_ssd_data:
 	print("Supervised Training")
-	train_set = CARLA_Data(root=config.train_data, config=config)
+	train_set = CARLA_Data(root=config.train_data, config=config, is_imgaug=True)
 	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 	for epoch in range(trainer.cur_epoch, args.epochs): 
 		trainer.train()
