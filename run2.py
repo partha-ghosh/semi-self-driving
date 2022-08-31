@@ -8,7 +8,7 @@ tests = [
     [
         {
             # "name": "aim-14_weathers_minimal_data-supervised",
-            "name": "aim-transfuser_plus_data2-supervised",
+            "name": "aim-transfuser_plus_data_no_noise-supervised",
             "dir": f"{root}/ssd",
             "sst": 0,
             "agent_name": "aim_agent",
@@ -18,30 +18,30 @@ tests = [
             "copy_last_model": 0,
             "load_model": 0,
         },
-        *[{
-            # "name": "aim-14_weathers_minimal_data-supervised",
-            "name": f"aim-transfuser_plus_data-self_supervised_{i}",
-            "dir": f"{root}/ssd",
-            "sst": 1,
-            "agent_name": "aim_agent",
-            "epochs": 5,
-            "batch_size": 64,
-            "eval": 0,
-            "copy_last_model": 1,
-            "load_model": 1,
-        } for i in range(0)],
-        {
-            # "name": "aim-14_weathers_minimal_data-supervised",
-            "name": "aim-transfuser_plus_data2-self_supervised",
-            "dir": f"{root}/ssd",
-            "sst": 1,
-            "agent_name": "aim_agent",
-            "epochs": 50,
-            "batch_size": 64,
-            "eval": 3,
-            "copy_last_model": 1,
-            "load_model": 1,
-        }
+        # *[{
+        #     # "name": "aim-14_weathers_minimal_data-supervised",
+        #     "name": f"aim-transfuser_plus_data-self_supervised_{i}",
+        #     "dir": f"{root}/ssd",
+        #     "sst": 1,
+        #     "agent_name": "aim_agent",
+        #     "epochs": 5,
+        #     "batch_size": 64,
+        #     "eval": 0,
+        #     "copy_last_model": 1,
+        #     "load_model": 1,
+        # } for i in range(0)],
+        # {
+        #     # "name": "aim-14_weathers_minimal_data-supervised",
+        #     "name": "aim-transfuser_plus_data2-self_supervised",
+        #     "dir": f"{root}/ssd",
+        #     "sst": 1,
+        #     "agent_name": "aim_agent",
+        #     "epochs": 50,
+        #     "batch_size": 64,
+        #     "eval": 3,
+        #     "copy_last_model": 1,
+        #     "load_model": 1,
+        # }
     ],
 
     # AIM Noise
@@ -221,10 +221,10 @@ def run_test(tests):
             'cmd': 
             [
                 # f'mkdir -p {test_dir} && rsync -a {orig_dir}/* {test_dir}/ --exclude=log* --exclude=__pycache__',
-                f'rsync -a {old_test_dir}/log {test_dir}/ --exclude=*.err --exclude=*.out' if test['copy_last_model'] else "",
+                f'rsync -a {old_test_dir}/log {test_dir}/ --exclude=*.err --exclude=*.out --exclude=*tfevents*' if test['copy_last_model'] else "",
                 f'cd {test_dir}',
                 f'CUDA_VISIBLE_DEVICES=0 python train.py --framework {splits[1]} --logdir log --epochs {test["epochs"]} --batch_size {test["batch_size"]} --load_model {test["load_model"]} {"--sst {} --ssd_dir {}".format(test["sst"], "-".join(splits[:-1])) if type(test["sst"])==int else ""} --id saved_model',
-                f'''{f"rsync -a /mnt/qb/work/geiger/pghosh58/transfuser/data/processed/ssd_data/{'-'.join(splits[:-1])} log/" if test["sst"]==0 else "echo"}''',
+                f'''{f"cp -r /mnt/qb/work/geiger/pghosh58/transfuser/data/processed/ssd_data/{'-'.join(splits[:-1])} log/" if test["sst"]==0 else "echo"}''',
 
                 # 3 evaluations
                 *([f'python {root}/tools/sbatch_submitter.py "sbatch {root}/shell_scripts/run_eval_{test_name}.sh"',]*test["eval"]),

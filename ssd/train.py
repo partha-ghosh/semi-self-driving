@@ -21,7 +21,7 @@ parser.add_argument('--id', type=str, default='aim', help='Unique experiment ide
 parser.add_argument('--device', type=str, default='cuda', help='Device to use')
 parser.add_argument('--epochs', type=int, default=101, help='Number of train epochs.')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate.')
-parser.add_argument('--val_every', type=int, default=5, help='Validation frequency (epochs).')
+parser.add_argument('--val_every', type=int, default=3, help='Validation frequency (epochs).')
 parser.add_argument('--batch_size', type=int, default=24, help='Batch size')
 parser.add_argument('--logdir', type=str, default='log', help='Directory to log data to.')
 
