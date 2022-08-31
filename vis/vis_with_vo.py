@@ -49,8 +49,8 @@ def calc_wp(seq_x, seq_y, seq_theta):
         waypoints.append(tuple(local_waypoint[0,:2]))
     return waypoints
 
-# pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence/log/aim_confidenece:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
-pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence_from_gt/log/aim_confidence_from_gt:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
+pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence/log/aim_confidenece:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
+# pseudo_labels = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence_from_gt/log/aim_confidence_from_gt:train_n_collect_e60_b64_08_20_03_21/ssd_data/rg_aim_pl_1_4.npy', allow_pickle=True)
 pseudo_labels_vo = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/test/poseconvgrut4l1/psuedo_waypoints.npy', allow_pickle=True)
 
 
@@ -59,12 +59,12 @@ def find_ri():
     flag = True
     while flag:
         ri = np.random.randint(0, n)
-        flag = True if (
+        flag = False if (
             ('town01' in pseudo_labels.item()['front'][ri][0]) or \
             ('town02' in pseudo_labels.item()['front'][ri][0]) or \
             ('town03' in pseudo_labels.item()['front'][ri][0]) or \
             ('town04' in pseudo_labels.item()['front'][ri][0])
-            ) else False
+            ) else True
     return ri
 
 ri = find_ri()
@@ -73,16 +73,19 @@ M = np.array([[0, 1], [-1, 0]])
 
 index = None
 save_index = 0
+target_index = 0
 while True:
     if index is not None:
         try:
-            scene = scene.replace(str(index).zfill(4), str(index+1).zfill(4))
+            scene = scene.replace(str(index).zfill(4), str(target_index).zfill(4))
             ri = pseudo_labels.item()['front'].index([scene])
         except:
             # exit()
-            ri = find_ri()
+            if target_index == 1000:
+                ri = find_ri()
+                target_index = 0
 
-
+    target_index += 1
     scene = pseudo_labels.item()['front'][ri][0]
     index = int(scene[-8:-4])
 

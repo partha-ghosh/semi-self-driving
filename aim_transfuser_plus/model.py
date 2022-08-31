@@ -21,12 +21,12 @@ class ImageCNN(nn.Module):
         self.features.fc = nn.Sequential()
 
     def forward(self, inputs):
-        c = 0
-        for x in inputs:
-            if self.normalize:
-                x = normalize_imagenet(x)
-            c += self.features(x)
-        return c
+    	c = 0
+    	for x in inputs:
+    		if self.normalize:
+    			x = normalize_imagenet(x)
+    		c += self.features(x)
+    	return c
 
 def normalize_imagenet(x):
     """ Normalize input images according to ImageNet standards.
@@ -89,36 +89,35 @@ class AIM(nn.Module):
                             nn.Linear(128, 64),
                             nn.ReLU(inplace=True),
                         ).to(self.device)
-
         self.decoder = nn.GRUCell(input_size=4, hidden_size=64).to(self.device)
-        self.output = nn.Linear(64, 3).to(self.device)
+        self.output = nn.Linear(64, 2).to(self.device)
 
     def forward(self, feature_emb, target_point):
-        '''
-        Predicts future waypoints from image features and target point (goal location)
-        Args:
-            feature_emb (list): list of feature tensors
-            target_point (tensor): goal location registered to ego-frame
-        '''
-        feature_emb = sum(feature_emb)
-        z = self.join(feature_emb)
+    	'''
+		Predicts future waypoints from image features and target point (goal location)
+		Args:
+			feature_emb (list): list of feature tensors
+			target_point (tensor): goal location registered to ego-frame
+    	'''
+    	feature_emb = sum(feature_emb)
+    	z = self.join(feature_emb)
 
-        output_wp = list()
-        
-        # initial input variable to GRU
-        x = torch.zeros(size=(z.shape[0], 2), dtype=z.dtype).to(self.device)
-        
-        # autoregressive generation of output waypoints
-        for _ in range(self.pred_len):
-            x_in = torch.cat([x, target_point], dim=1)
-            z = self.decoder(x_in, z)
-            dx = self.output(z)
-            x = dx[:,:2] + x
-            output_wp.append(torch.cat((x, torch.sigmoid(torch.clip(dx[:,2].reshape((-1,1)), -3, 3))), dim=1))
+    	output_wp = list()
 
-        pred_wp = torch.stack(output_wp, dim=1)
+    	# initial input variable to GRU
+    	x = torch.zeros(size=(z.shape[0], 2), dtype=z.dtype).to(self.device)
 
-        return pred_wp
+    	# autoregressive generation of output waypoints
+    	for _ in range(self.pred_len):
+    		x_in = torch.cat([x, target_point], dim=1)
+    		z = self.decoder(x_in, z)
+    		dx = self.output(z)
+    		x = dx + x
+    		output_wp.append(x)
+
+    	pred_wp = torch.stack(output_wp, dim=1)
+
+    	return pred_wp
 
     def control_pid(self, waypoints, velocity):
         ''' 

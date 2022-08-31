@@ -24,6 +24,7 @@ parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate.')
 parser.add_argument('--val_every', type=int, default=5, help='Validation frequency (epochs).')
 parser.add_argument('--batch_size', type=int, default=24, help='Batch size')
 parser.add_argument('--logdir', type=str, default='log', help='Directory to log data to.')
+parser.add_argument('--load_model', type=int, default=0, help='Load saved model')
 
 args = parser.parse_args()
 args.logdir = os.path.join(args.logdir, args.id)
@@ -226,30 +227,31 @@ params = sum([np.prod(p.size()) for p in model_parameters])
 print ('Total trainable parameters: ', params)
 
 # Create logdir
-if not os.path.isdir(args.logdir):
-	os.makedirs(args.logdir)
-	print('Created dir:', args.logdir)
-elif os.path.isfile(os.path.join(args.logdir, 'recent.log')):
-	print('Loading checkpoint from ' + args.logdir)
-	with open(os.path.join(args.logdir, 'recent.log'), 'r') as f:
-		log_table = json.load(f)
+# if not os.path.isdir(args.logdir):
+# 	os.makedirs(args.logdir)
+# 	print('Created dir:', args.logdir)
+# elif os.path.isfile(os.path.join(args.logdir, 'recent.log')):
+# 	print('Loading checkpoint from ' + args.logdir)
+# 	with open(os.path.join(args.logdir, 'recent.log'), 'r') as f:
+# 		log_table = json.load(f)
 
-	# Load variables
-	trainer.cur_epoch = log_table['epoch']
-	if 'iter' in log_table: trainer.cur_iter = log_table['iter']
-	trainer.bestval = log_table['bestval']
-	trainer.train_loss = log_table['train_loss']
-	trainer.val_loss = log_table['val_loss']
+# 	# Load variables
+# 	trainer.cur_epoch = log_table['epoch']
+# 	if 'iter' in log_table: trainer.cur_iter = log_table['iter']
+# 	trainer.bestval = log_table['bestval']
+# 	trainer.train_loss = log_table['train_loss']
+# 	trainer.val_loss = log_table['val_loss']
 
-	# Load checkpoint
-	model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
-	optimizer.load_state_dict(torch.load(os.path.join(args.logdir, 'recent_optim.pth')))
+# 	# Load checkpoint
+# 	model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
+# 	optimizer.load_state_dict(torch.load(os.path.join(args.logdir, 'recent_optim.pth')))
 
-# try:
-# 	model.load_state_dict(torch.load("/mnt/qb/work/geiger/pghosh58/transfuser/aim/log/aim_all_town_e60_b64_07_31_00_31/aim/model.pth"))
-# 	print("model loaded")
-# except:
-# 	print('failed to load')
+if args.load_model:
+	try:
+		model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
+		print("model loaded")
+	except:
+		raise 'failed to load the model'
 
 # Log args
 with open(os.path.join(args.logdir, 'args.txt'), 'w') as f:

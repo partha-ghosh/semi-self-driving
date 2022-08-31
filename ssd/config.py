@@ -6,9 +6,9 @@ class GlobalConfig:
     seq_len = 1 # input timesteps
     pred_len = 4 # future waypoints predicted
 
-    local_root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/processed'
-    root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
-    os.system(f'mkdir -p {local_root_dir}/ssd_data')
+    # root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
+    root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data'
+    local_root_dir = f'/mnt/qb/work/geiger/pghosh58/transfuser/data/processed/{os.path.basename(root_dir)}'
     
     train_towns = ['Town01', 'Town02', 'Town03', 'Town04']
     val_towns = ['Town05']
@@ -18,10 +18,12 @@ class GlobalConfig:
     for town in train_towns:
         train_data.append(town+'_tiny')
         train_data.append(town+'_short')
+        train_data.append(town+'_long')
     
     for town in ssd_towns:
         ssd_data.append(town+'_tiny')
         ssd_data.append(town+'_short')
+        ssd_data.append(town+'_long')
 
     for town in val_towns:
         val_data.append(town+'_short')
@@ -53,14 +55,14 @@ class GlobalConfig:
     clip_delta = 0.25 # maximum change in speed input to logitudinal controller
 
     def __init__(self, **kwargs):
-        self.train_with_ssd_data = False
+        self.self_supervised_training = False
         for k,v in kwargs.items():
             setattr(self, k, v)
         
 
-        if self.train_with_ssd_data:
+        if self.self_supervised_training:
             print('Self-supervised Training')
-            GlobalConfig.ssd_train_data = [os.path.join(GlobalConfig.local_root_dir, 'ssd_data')]
+            GlobalConfig.ssd_train_data = [os.path.join(GlobalConfig.local_root_dir+'/../ssd_data', self.ssd_dir)]
         else:
-            print('Collect data for self-supervised training')
+            print('Supervised Training')
 

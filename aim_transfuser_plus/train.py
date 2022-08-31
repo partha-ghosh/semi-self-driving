@@ -24,7 +24,6 @@ parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate.')
 parser.add_argument('--val_every', type=int, default=5, help='Validation frequency (epochs).')
 parser.add_argument('--batch_size', type=int, default=24, help='Batch size')
 parser.add_argument('--logdir', type=str, default='log', help='Directory to log data to.')
-parser.add_argument('--sst', type=int, default=0, help='Self-supervised training')
 
 args = parser.parse_args()
 args.logdir = os.path.join(args.logdir, args.id)
@@ -63,24 +62,44 @@ class Engine(object):
 			
 			# create batch and move to GPU
 			fronts_in = data['fronts']
+			lefts_in = data['lefts']
+			rights_in = data['rights']
+			rears_in = data['rears']
 			fronts = []
+			lefts = []
+			rights = []
+			rears = []
 			for i in range(config.seq_len):
 				fronts.append(fronts_in[i].to(args.device, dtype=torch.float32))
+				if not config.ignore_sides:
+					lefts.append(lefts_in[i].to(args.device, dtype=torch.float32))
+					rights.append(rights_in[i].to(args.device, dtype=torch.float32))
+				if not config.ignore_rear:
+					rears.append(rears_in[i].to(args.device, dtype=torch.float32))
+
+			# driving labels
+			command = data['command'].to(args.device)
+			gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
+			gt_steer = data['steer'].to(args.device, dtype=torch.float32)
+			gt_throttle = data['throttle'].to(args.device, dtype=torch.float32)
+			gt_brake = data['brake'].to(args.device, dtype=torch.float32)
 
 			# target point
-			# command = data['command'].to(args.device)
-			# gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
 			target_point = torch.stack(data['target_point'], dim=1).to(args.device, dtype=torch.float32)
 
 			# inference
 			encoding = [model.image_encoder(fronts)]
+			if not config.ignore_sides:
+				encoding.append(model.image_encoder(lefts))
+				encoding.append(model.image_encoder(rights))
+			if not config.ignore_rear:
+				encoding.append(model.image_encoder(rears))
 
 			pred_wp = model(encoding, target_point)
 			
 			gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(args.device, dtype=torch.float32) for i in range(config.seq_len, len(data['waypoints']))]
 			gt_waypoints = torch.stack(gt_waypoints, dim=1).to(args.device, dtype=torch.float32)
-			# loss = F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
-			loss = self.custom_loss(pred_wp, gt_waypoints)
+			loss = F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
 			loss.backward()
 			loss_epoch += float(loss.item())
 
@@ -95,81 +114,6 @@ class Engine(object):
 		self.train_loss.append(loss_epoch)
 		self.cur_epoch += 1
 
-	def custom_loss(self, pred, gt):
-		bbl = 1
-		x = bbl - torch.minimum(bbl*torch.ones_like(pred[:,:,0]), torch.abs(pred[:,:,0]-gt[:,:,0]))
-		y = bbl - torch.minimum(bbl*torch.ones_like(pred[:,:,1]), torch.abs(pred[:,:,1]-gt[:,:,1]))
-
-		ia = x*y
-		ua = (2*bbl) - ia
-		iou = ia/ua
-
-		return F.l1_loss(pred[:,:,:2], gt).mean() + F.l1_loss(pred[:,:,2], iou).mean()
-
-	def get_labels(self):
-		model.eval()
-		preload_file = os.path.join(config.local_root_dir, 'ssd_data/' + 'rg_aim_pl_'+str(config.seq_len)+'_'+str(config.pred_len)+'.npy')
-
-		preload_front = []
-		preload_x = []
-		preload_y = []
-		preload_theta = []
-		preload_x_command = []
-		preload_y_command = []
-		preload_waypoints = []
-		preload_confidence = []
-
-		with torch.no_grad():	
-
-			# Validation loop
-			for data in tqdm(dataloader_ssd):
-				
-				# create batch and move to GPU
-				fronts_in = data['fronts']
-				fronts = []
-				for i in range(config.seq_len):
-					fronts.append(fronts_in[i].to(args.device, dtype=torch.float32))
-
-				# driving labels
-				# command = data['command'].to(args.device)
-				# gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
-
-				# target point
-				target_point = torch.stack(data['target_point'], dim=1).to(args.device, dtype=torch.float32)
-
-				# inference
-				encoding = [model.image_encoder(fronts)]
-
-				pred_wp = model(encoding, target_point)
-
-				for i in range(len(pred_wp)):
-					if pred_wp[i][len(pred_wp[0])-1][2].item() < 0.3:
-						continue
-					preload_front.append([data['ssd_fronts'][0][i]])
-					preload_x.append([0]*(config.pred_len+1))
-					preload_y.append([0]*(config.pred_len+1))
-					preload_theta.append([0]*(config.pred_len+1))
-					preload_x_command.append(data['x_command'][i].item())
-					preload_y_command.append(data['y_command'][i].item())
-					wp = [(0.0,0.0)]
-					for j in range(len(pred_wp[0])):
-						wp.append((pred_wp[i][j][0].item(), pred_wp[i][j][1].item()))
-					preload_waypoints.append(wp)
-					preload_confidence.append(pred_wp[i][len(pred_wp[0])-1][2].item())
-					assert len(preload_x) == len(preload_waypoints)
-
-		preload_dict = {}
-		preload_dict['front'] = preload_front
-		preload_dict['x'] = preload_x
-		preload_dict['y'] = preload_y
-		preload_dict['theta'] = preload_theta
-		preload_dict['x_command'] = preload_x_command
-		preload_dict['y_command'] = preload_y_command
-		preload_dict['waypoints'] = preload_waypoints
-		preload_dict['confidence'] = preload_confidence
-		np.save(preload_file, preload_dict)
-
-
 	def validate(self):
 		model.eval()
 
@@ -182,26 +126,44 @@ class Engine(object):
 				
 				# create batch and move to GPU
 				fronts_in = data['fronts']
+				lefts_in = data['lefts']
+				rights_in = data['rights']
+				rears_in = data['rears']
 				fronts = []
+				lefts = []
+				rights = []
+				rears = []
 				for i in range(config.seq_len):
 					fronts.append(fronts_in[i].to(args.device, dtype=torch.float32))
+					if not config.ignore_sides:
+						lefts.append(lefts_in[i].to(args.device, dtype=torch.float32))
+						rights.append(rights_in[i].to(args.device, dtype=torch.float32))
+					if not config.ignore_rear:
+						rears.append(rears_in[i].to(args.device, dtype=torch.float32))
 
 				# driving labels
-				# command = data['command'].to(args.device)
-				# gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
+				command = data['command'].to(args.device)
+				gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
+				gt_steer = data['steer'].to(args.device, dtype=torch.float32)
+				gt_throttle = data['throttle'].to(args.device, dtype=torch.float32)
+				gt_brake = data['brake'].to(args.device, dtype=torch.float32)
 
 				# target point
 				target_point = torch.stack(data['target_point'], dim=1).to(args.device, dtype=torch.float32)
 
 				# inference
 				encoding = [model.image_encoder(fronts)]
+				if not config.ignore_sides:
+					encoding.append(model.image_encoder(lefts))
+					encoding.append(model.image_encoder(rights))
+				if not config.ignore_rear:
+					encoding.append(model.image_encoder(rears))
 
 				pred_wp = model(encoding, target_point)
 
 				gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(args.device, dtype=torch.float32) for i in range(config.seq_len, len(data['waypoints']))]
 				gt_waypoints = torch.stack(gt_waypoints, dim=1).to(args.device, dtype=torch.float32)
-				# wp_epoch += float(F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean())
-				wp_epoch += float(self.custom_loss(pred_wp, gt_waypoints))
+				wp_epoch += float(F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean())
 
 				num_batches += 1
 					
@@ -245,15 +207,13 @@ class Engine(object):
 			tqdm.write('====== Overwrote best model ======>')
 
 # Config
-config = GlobalConfig(train_with_ssd_data=args.sst)
+config = GlobalConfig()
 
 # Data
 train_set = CARLA_Data(root=config.train_data, config=config)
-ssd_set = CARLA_Data(root=config.ssd_data, config=config)
 val_set = CARLA_Data(root=config.val_data, config=config)
 
 dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-dataloader_ssd = DataLoader(ssd_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 dataloader_val = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
 
 # Model
@@ -265,63 +225,38 @@ model_parameters = filter(lambda p: p.requires_grad, model.parameters())
 params = sum([np.prod(p.size()) for p in model_parameters])
 print ('Total trainable parameters: ', params)
 
-# # Create logdir
-# if not os.path.isdir(args.logdir):
-# 	os.makedirs(args.logdir)
-# 	print('Created dir:', args.logdir)
-# elif os.path.isfile(os.path.join(args.logdir, 'recent.log')):
-# 	print('Loading checkpoint from ' + args.logdir)
-# 	with open(os.path.join(args.logdir, 'recent.log'), 'r') as f:
-# 		log_table = json.load(f)
+# Create logdir
+if not os.path.isdir(args.logdir):
+	os.makedirs(args.logdir)
+	print('Created dir:', args.logdir)
+elif os.path.isfile(os.path.join(args.logdir, 'recent.log')):
+	print('Loading checkpoint from ' + args.logdir)
+	with open(os.path.join(args.logdir, 'recent.log'), 'r') as f:
+		log_table = json.load(f)
 
-# 	# Load variables
-# 	trainer.cur_epoch = log_table['epoch']
-# 	if 'iter' in log_table: trainer.cur_iter = log_table['iter']
-# 	trainer.bestval = log_table['bestval']
-# 	trainer.train_loss = log_table['train_loss']
-# 	trainer.val_loss = log_table['val_loss']
+	# Load variables
+	trainer.cur_epoch = log_table['epoch']
+	if 'iter' in log_table: trainer.cur_iter = log_table['iter']
+	trainer.bestval = log_table['bestval']
+	trainer.train_loss = log_table['train_loss']
+	trainer.val_loss = log_table['val_loss']
 
-# 	# Load checkpoint
-	# model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
-# 	optimizer.load_state_dict(torch.load(os.path.join(args.logdir, 'recent_optim.pth')))
+	# Load checkpoint
+	model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
+	optimizer.load_state_dict(torch.load(os.path.join(args.logdir, 'recent_optim.pth')))
+
+# try:
+# 	model.load_state_dict(torch.load("/mnt/qb/work/geiger/pghosh58/transfuser/aim/log/aim_all_town_e60_b64_07_31_00_31/aim/model.pth"))
+# 	print("model loaded")
+# except:
+# 	print('failed to load')
 
 # Log args
 with open(os.path.join(args.logdir, 'args.txt'), 'w') as f:
 	json.dump(args.__dict__, f, indent=2)
 
-# for epoch in range(trainer.cur_epoch, args.epochs): 
-# 	trainer.train()
-# 	if epoch % args.val_every == 0: 
-# 		trainer.validate()
-# 		trainer.save()
-
-if config.train_with_ssd_data:
-	print("Training with Pseudolabels")
-	train_set = CARLA_Data(root=config.ssd_train_data, config=config)
-	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-	for epoch in range(trainer.cur_epoch, args.epochs): 
-		trainer.train()
-		if epoch % args.val_every == 0: 
-			trainer.validate()
-			trainer.save()
-	print("Fine Tuning")
-	train_set = CARLA_Data(root=config.train_data, config=config)
-	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-	for epoch in range(trainer.cur_epoch, args.epochs): 
-		trainer.train()
-		if epoch % args.val_every == 0: 
-			trainer.validate()
-			trainer.save()
-
-if not config.train_with_ssd_data:
-	print("Supervised Training")
-	train_set = CARLA_Data(root=config.train_data, config=config)
-	dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
-	# for epoch in range(trainer.cur_epoch, args.epochs): 
-	# 	trainer.train()
-	# 	if epoch % args.val_every == 0: 
-	# 		trainer.validate()
-	# 		trainer.save()
-	print("Collect Labels")
-	model.load_state_dict(torch.load('/mnt/qb/work/geiger/pghosh58/transfuser/ssd/aim_confidence/log/aim_confidenece:train_n_collect_e60_b64_08_20_03_21/aim/best_model.pth'))
-	trainer.get_labels()
+for epoch in range(trainer.cur_epoch, args.epochs):
+	trainer.train()
+	if epoch % args.val_every == 0: 
+		trainer.validate()
+		trainer.save()

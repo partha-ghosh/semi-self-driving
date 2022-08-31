@@ -5,27 +5,15 @@ from PIL import Image
 import numpy as np
 import torch 
 from torch.utils.data import Dataset
-from imgaug import augmenters as iaa, imgaug
-import imageio
+
 
 class CARLA_Data(Dataset):
 
-    def __init__(self, root, config, is_imgaug=False):
+    def __init__(self, root, config):
         self.config = config
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
-        self.is_imgaug = is_imgaug
-        self.imgaug = iaa.Sequential([
-            iaa.SomeOf((0,2),
-            [
-                iaa.AdditiveGaussianNoise(scale=0.08*255, per_channel=True),
-                iaa.AdditiveGaussianNoise(scale=0.08*255),
-                iaa.Multiply((0.5, 1.5)),
-                iaa.GaussianBlur(sigma=(0.0, 0.8)),
-                iaa.Dropout(p=(0, 0.1)),
-                iaa.SaltAndPepper(0.05),
-            ], random_order=True),
-        ])
+
         self.front = []
         self.left = []
         self.right = []
@@ -40,17 +28,9 @@ class CARLA_Data(Dataset):
         self.brake = []
         self.command = []
         self.velocity = []
-        self.waypoints = []
 
         for sub_root in root:
-            sub_root_local = os.path.join(self.config.local_root_dir, sub_root)
-            sub_root = os.path.join(self.config.root_dir, sub_root)
-            print(sub_root,sub_root_local,not os.path.exists(sub_root))
-
-            if not os.path.exists(sub_root):
-                continue
-            os.system(f'mkdir -p {sub_root_local}')
-            preload_file = os.path.join(sub_root_local, 'rg_aim_pl_'+str(self.seq_len)+'_'+str(self.pred_len)+'.npy')
+            preload_file = os.path.join(sub_root, 'rg_lidar_diag_pl_'+str(self.seq_len)+'_'+str(self.pred_len)+'.npy')
 
             # dump to npy if no preload
             if not os.path.exists(preload_file):
@@ -68,7 +48,6 @@ class CARLA_Data(Dataset):
                 preload_brake = []
                 preload_command = []
                 preload_velocity = []
-                preload_waypoints = []
 
                 # list sub-directories in root 
                 root_files = os.listdir(sub_root)
@@ -113,7 +92,6 @@ class CARLA_Data(Dataset):
                         preload_brake.append(data['brake'])
                         preload_command.append(data['command'])
                         preload_velocity.append(data['speed'])
-                        preload_waypoints.append([])
 
                         # read files sequentially (future frames)
                         for i in range(self.seq_len, self.seq_len + self.pred_len):
@@ -153,18 +131,25 @@ class CARLA_Data(Dataset):
                 preload_dict['brake'] = preload_brake
                 preload_dict['command'] = preload_command
                 preload_dict['velocity'] = preload_velocity
-                preload_dict['waypoints'] = preload_waypoints
                 np.save(preload_file, preload_dict)
 
             # load from npy if available
             preload_dict = np.load(preload_file, allow_pickle=True)
+            x=preload_dict.item()
             self.front += preload_dict.item()['front']
+            self.left += preload_dict.item()['left']
+            self.right += preload_dict.item()['right']
+            self.rear += preload_dict.item()['rear']
             self.x += preload_dict.item()['x']
             self.y += preload_dict.item()['y']
-            self.theta += preload_dict.item()['theta']
             self.x_command += preload_dict.item()['x_command']
             self.y_command += preload_dict.item()['y_command']
-            self.waypoints += preload_dict.item()['waypoints']
+            self.theta += preload_dict.item()['theta']
+            self.steer += preload_dict.item()['steer']
+            self.throttle += preload_dict.item()['throttle']
+            self.brake += preload_dict.item()['brake']
+            self.command += preload_dict.item()['command']
+            self.velocity += preload_dict.item()['velocity']
             print("Preloading " + str(len(preload_dict.item()['front'])) + " sequences from " + preload_file)
 
     def __len__(self):
@@ -175,25 +160,29 @@ class CARLA_Data(Dataset):
         """Returns the item at index idx. """
         data = dict()
         data['fronts'] = []
+        data['lefts'] = []
+        data['rights'] = []
+        data['rears'] = []
 
-        data['ssd_fronts'] = self.front[index]
-        data['x_command'] = self.x_command[index]
-        data['y_command'] = self.y_command[index]
         seq_fronts = self.front[index]
-        waypoints = self.waypoints[index]
-
+        seq_lefts = self.left[index]
+        seq_rights = self.right[index]
+        seq_rears = self.rear[index]
         seq_x = self.x[index]
         seq_y = self.y[index]
         seq_theta = self.theta[index]
 
         for i in range(self.seq_len):
-            img = np.array(scale_and_crop_image(Image.open(seq_fronts[i]), scale=self.config.scale, crop=self.config.input_resolution))
-            if self.is_imgaug:
-                aug_img = self.imgaug.augment_image(img)
-                # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
-                data['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
-            else:
-                data['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
+            data['fronts'].append(torch.from_numpy(np.array(
+                scale_and_crop_image(Image.open(seq_fronts[i]), scale=self.config.scale, crop=self.config.input_resolution))))
+            if not self.config.ignore_sides:
+                data['lefts'].append(torch.from_numpy(np.array(
+                    scale_and_crop_image(Image.open(seq_lefts[i]), scale=self.config.scale, crop=self.config.input_resolution))))
+                data['rights'].append(torch.from_numpy(np.array(
+                    scale_and_crop_image(Image.open(seq_rights[i]), scale=self.config.scale, crop=self.config.input_resolution))))
+            if not self.config.ignore_rear:
+                data['rears'].append(torch.from_numpy(np.array(
+                    scale_and_crop_image(Image.open(seq_rears[i]), scale=self.config.scale, crop=self.config.input_resolution))))
         
             # fix for theta=nan in some measurements
             if np.isnan(seq_theta[i]):
@@ -203,16 +192,15 @@ class CARLA_Data(Dataset):
         ego_y = seq_y[i]
         ego_theta = seq_theta[i]   
 
-        if not waypoints:
-            # lidar and waypoint processing to local coordinates
-            waypoints = []
-            for i in range(self.seq_len + self.pred_len):
-                # waypoint is the transformed version of the origin in local coordinates
-                # we use 90-theta instead of theta
-                # LBC code uses 90+theta, but x is to the right and y is downwards here
-                local_waypoint = transform_2d_points(np.zeros((1,3)), 
-                    np.pi/2-seq_theta[i], -seq_x[i], -seq_y[i], np.pi/2-ego_theta, -ego_x, -ego_y)
-                waypoints.append(tuple(local_waypoint[0,:2]))
+        # lidar and waypoint processing to local coordinates
+        waypoints = []
+        for i in range(self.seq_len + self.pred_len):
+            # waypoint is the transformed version of the origin in local coordinates
+            # we use 90-theta instead of theta
+            # LBC code uses 90+theta, but x is to the right and y is downwards here
+            local_waypoint = transform_2d_points(np.zeros((1,3)), 
+                np.pi/2-seq_theta[i], -seq_x[i], -seq_y[i], np.pi/2-ego_theta, -ego_x, -ego_y)
+            waypoints.append(tuple(local_waypoint[0,:2]))
 
         data['waypoints'] = waypoints
 
@@ -225,6 +213,12 @@ class CARLA_Data(Dataset):
         local_command_point = np.array([self.x_command[index]-ego_x, self.y_command[index]-ego_y])
         local_command_point = R.T.dot(local_command_point)
         data['target_point'] = tuple(local_command_point)
+
+        data['steer'] = self.steer[index]
+        data['throttle'] = self.throttle[index]
+        data['brake'] = self.brake[index]
+        data['command'] = self.command[index]
+        data['velocity'] = self.velocity[index]
 
         return data
 
@@ -239,7 +233,7 @@ def scale_and_crop_image(image, scale=1, crop=256):
     start_x = height//2 - crop//2
     start_y = width//2 - crop//2
     cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
-    # cropped_image = np.transpose(cropped_image, (2,0,1))
+    cropped_image = np.transpose(cropped_image, (2,0,1))
     return cropped_image
 
 

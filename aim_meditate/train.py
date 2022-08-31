@@ -12,7 +12,7 @@ import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 
 from model import AIM
-from data import CARLA_Data, CARLA_Data2
+from data import CARLA_Data
 from config import GlobalConfig
 
 
@@ -62,15 +62,38 @@ class Engine(object):
 			
 			# create batch and move to GPU
 			fronts_in = data['fronts']
+			lefts_in = data['lefts']
+			rights_in = data['rights']
+			rears_in = data['rears']
 			fronts = []
+			lefts = []
+			rights = []
+			rears = []
 			for i in range(config.seq_len):
 				fronts.append(fronts_in[i].to(args.device, dtype=torch.float32))
+				if not config.ignore_sides:
+					lefts.append(lefts_in[i].to(args.device, dtype=torch.float32))
+					rights.append(rights_in[i].to(args.device, dtype=torch.float32))
+				if not config.ignore_rear:
+					rears.append(rears_in[i].to(args.device, dtype=torch.float32))
 
 			# driving labels
+			command = data['command'].to(args.device)
+			gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
+			gt_steer = data['steer'].to(args.device, dtype=torch.float32)
+			gt_throttle = data['throttle'].to(args.device, dtype=torch.float32)
+			gt_brake = data['brake'].to(args.device, dtype=torch.float32)
+
+			# target point
 			target_point = torch.stack(data['target_point'], dim=1).to(args.device, dtype=torch.float32)
 
 			# inference
 			encoding = [model.image_encoder(fronts)]
+			if not config.ignore_sides:
+				encoding.append(model.image_encoder(lefts))
+				encoding.append(model.image_encoder(rights))
+			if not config.ignore_rear:
+				encoding.append(model.image_encoder(rears))
 
 			pred_wp = model(encoding, target_point)
 			
@@ -103,15 +126,39 @@ class Engine(object):
 				
 				# create batch and move to GPU
 				fronts_in = data['fronts']
+				lefts_in = data['lefts']
+				rights_in = data['rights']
+				rears_in = data['rears']
 				fronts = []
+				lefts = []
+				rights = []
+				rears = []
 				for i in range(config.seq_len):
 					fronts.append(fronts_in[i].to(args.device, dtype=torch.float32))
+					if not config.ignore_sides:
+						lefts.append(lefts_in[i].to(args.device, dtype=torch.float32))
+						rights.append(rights_in[i].to(args.device, dtype=torch.float32))
+					if not config.ignore_rear:
+						rears.append(rears_in[i].to(args.device, dtype=torch.float32))
+
+				# driving labels
+				command = data['command'].to(args.device)
+				gt_velocity = data['velocity'].to(args.device, dtype=torch.float32)
+				gt_steer = data['steer'].to(args.device, dtype=torch.float32)
+				gt_throttle = data['throttle'].to(args.device, dtype=torch.float32)
+				gt_brake = data['brake'].to(args.device, dtype=torch.float32)
 
 				# target point
 				target_point = torch.stack(data['target_point'], dim=1).to(args.device, dtype=torch.float32)
 
 				# inference
 				encoding = [model.image_encoder(fronts)]
+				if not config.ignore_sides:
+					encoding.append(model.image_encoder(lefts))
+					encoding.append(model.image_encoder(rights))
+				if not config.ignore_rear:
+					encoding.append(model.image_encoder(rears))
+
 				pred_wp = model(encoding, target_point)
 
 				gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(args.device, dtype=torch.float32) for i in range(config.seq_len, len(data['waypoints']))]
@@ -164,7 +211,7 @@ config = GlobalConfig()
 
 # Data
 train_set = CARLA_Data(root=config.train_data, config=config)
-val_set = CARLA_Data2(root=config.val_data, config=config)
+val_set = CARLA_Data(root=config.val_data, config=config)
 
 dataloader_train = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
 dataloader_val = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=8, pin_memory=True)
@@ -197,6 +244,12 @@ elif os.path.isfile(os.path.join(args.logdir, 'recent.log')):
 	# Load checkpoint
 	model.load_state_dict(torch.load(os.path.join(args.logdir, 'model.pth')))
 	optimizer.load_state_dict(torch.load(os.path.join(args.logdir, 'recent_optim.pth')))
+
+# try:
+# 	model.load_state_dict(torch.load("/mnt/qb/work/geiger/pghosh58/transfuser/aim/log/aim_all_town_e60_b64_07_31_00_31/aim/model.pth"))
+# 	print("model loaded")
+# except:
+# 	print('failed to load')
 
 # Log args
 with open(os.path.join(args.logdir, 'args.txt'), 'w') as f:

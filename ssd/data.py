@@ -5,15 +5,27 @@ from PIL import Image
 import numpy as np
 import torch 
 from torch.utils.data import Dataset
-
+from imgaug import augmenters as iaa, imgaug
+import imageio
 
 class CARLA_Data(Dataset):
 
-    def __init__(self, root, config):
+    def __init__(self, root, config, is_imgaug=True):
         self.config = config
         self.seq_len = config.seq_len
         self.pred_len = config.pred_len
-
+        self.is_imgaug = is_imgaug
+        self.imgaug = iaa.Sequential([
+            iaa.SomeOf((0,2),
+            [
+                iaa.AdditiveGaussianNoise(scale=0.08*255, per_channel=True),
+                iaa.AdditiveGaussianNoise(scale=0.08*255),
+                iaa.Multiply((0.5, 1.5)),
+                iaa.GaussianBlur(sigma=(0.0, 0.8)),
+                iaa.Dropout(p=(0, 0.1)),
+                iaa.SaltAndPepper(0.05),
+            ], random_order=True),
+        ])
         self.front = []
         self.left = []
         self.right = []
@@ -33,11 +45,12 @@ class CARLA_Data(Dataset):
         for sub_root in root:
             sub_root_local = os.path.join(self.config.local_root_dir, sub_root)
             sub_root = os.path.join(self.config.root_dir, sub_root)
+            # print(sub_root_local,not os.path.exists(sub_root))
             if not os.path.exists(sub_root):
                 continue
             os.system(f'mkdir -p {sub_root_local}')
             preload_file = os.path.join(sub_root_local, 'rg_aim_pl_'+str(self.seq_len)+'_'+str(self.pred_len)+'.npy')
-            print(preload_file)
+
             # dump to npy if no preload
             if not os.path.exists(preload_file):
                 preload_front = []
@@ -173,8 +186,13 @@ class CARLA_Data(Dataset):
         seq_theta = self.theta[index]
 
         for i in range(self.seq_len):
-            data['fronts'].append(torch.from_numpy(np.array(
-                scale_and_crop_image(Image.open(seq_fronts[i]), scale=self.config.scale, crop=self.config.input_resolution))))
+            img = np.array(scale_and_crop_image(Image.open(seq_fronts[i]), scale=self.config.scale, crop=self.config.input_resolution))
+            if self.is_imgaug:
+                aug_img = self.imgaug.augment_image(img)
+                # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
+                data['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
+            else:
+                data['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
         
             # fix for theta=nan in some measurements
             if np.isnan(seq_theta[i]):
@@ -220,7 +238,7 @@ def scale_and_crop_image(image, scale=1, crop=256):
     start_x = height//2 - crop//2
     start_y = width//2 - crop//2
     cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
-    cropped_image = np.transpose(cropped_image, (2,0,1))
+    # cropped_image = np.transpose(cropped_image, (2,0,1))
     return cropped_image
 
 
