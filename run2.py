@@ -1,47 +1,47 @@
 from run_utils import *
 
 root = os.path.dirname(os.path.abspath(__file__))
-exp_time = '08_30_21_48' #datetime.datetime.now().strftime("%m_%d_%H_%M")
+exp_time = '09_03_18_58'#datetime.datetime.now().strftime("%m_%d_%H_%M")
 
 tests = [
     # AIM Baseline
     [
         {
             # "name": "aim-14_weathers_minimal_data-supervised",
-            "name": "aim-transfuser_plus_data_no_noise-supervised",
+            "name": "aim-transfuser_plus_data_all_towns_noise_filtered_lr3-supervised",
             "dir": f"{root}/ssd",
             "sst": 0,
             "agent_name": "aim_agent",
             "epochs": 50,
             "batch_size": 64,
-            "eval": 0,
+            "eval": 3,
             "copy_last_model": 0,
             "load_model": 0,
         },
-        # *[{
-        #     # "name": "aim-14_weathers_minimal_data-supervised",
-        #     "name": f"aim-transfuser_plus_data-self_supervised_{i}",
-        #     "dir": f"{root}/ssd",
-        #     "sst": 1,
-        #     "agent_name": "aim_agent",
-        #     "epochs": 5,
-        #     "batch_size": 64,
-        #     "eval": 0,
-        #     "copy_last_model": 1,
-        #     "load_model": 1,
-        # } for i in range(0)],
-        # {
-        #     # "name": "aim-14_weathers_minimal_data-supervised",
-        #     "name": "aim-transfuser_plus_data2-self_supervised",
-        #     "dir": f"{root}/ssd",
-        #     "sst": 1,
-        #     "agent_name": "aim_agent",
-        #     "epochs": 50,
-        #     "batch_size": 64,
-        #     "eval": 3,
-        #     "copy_last_model": 1,
-        #     "load_model": 1,
-        # }
+    #     *[{
+    #         # "name": "aim-14_weathers_minimal_data-supervised",
+    #         "name": f"aim-transfuser_plus_data-self_supervised_{i}",
+    #         "dir": f"{root}/ssd",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 5,
+    #         "batch_size": 64,
+    #         "eval": 0,
+    #         "copy_last_model": 1,
+    #         "load_model": 1,
+    #     } for i in range(0)],
+    #     {
+    #         # "name": "aim-14_weathers_minimal_data-supervised",
+    #         "name": "aim-transfuser_plus_data2-self_supervised",
+    #         "dir": f"{root}/ssd",
+    #         "sst": 1,
+    #         "agent_name": "aim_agent",
+    #         "epochs": 50,
+    #         "batch_size": 64,
+    #         "eval": 3,
+    #         "copy_last_model": 1,
+    #         "load_model": 1,
+    #     }
     ],
 
     # AIM Noise
@@ -176,9 +176,9 @@ tests = [
     #     "dir": f"{root}/aim",
     #     "sst": '',
     #     "agent_name": "aim_agent",
-    #     "epochs": 1,
+    #     "epochs": 0,
     #     "batch_size": 64,
-    #     "eval": 0,
+    #     "eval": 3,
     #     "copy_last_model": 0,
     #     "load_model": 0,
     # }],

@@ -9,11 +9,15 @@ class GlobalConfig:
     # root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
     root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data'
     local_root_dir = f'/mnt/qb/work/geiger/pghosh58/transfuser/data/processed/{os.path.basename(root_dir)}'
-    
-    train_towns = ['Town01', 'Town02', 'Town03', 'Town04']
+    filtered_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal'
+
+    # train_towns = ['Town01', 'Town02', 'Town03', 'Town04']
+    # ssd_towns = ['Town01', 'Town02', 'Town03', 'Town04', 'Town06', 'Town07', 'Town10']
     val_towns = ['Town05']
-    ssd_towns = ['Town01', 'Town02', 'Town03', 'Town04', 'Town06', 'Town07', 'Town10']
-    
+
+    train_towns = ['Town01', 'Town02', 'Town03', 'Town04', 'Town06', 'Town07', 'Town10']
+    ssd_towns = ['Town01']
+
     train_data, val_data, ssd_data = [], [], []
     for town in train_towns:
         train_data.append(town+'_tiny')

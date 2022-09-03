@@ -9,6 +9,48 @@ from imgaug import augmenters as iaa, imgaug
 import imageio
 
 class CARLA_Data(Dataset):
+    def __init__(self, root, config, is_imgaug=True) -> None:
+        super().__init__()
+        self.config = config
+        self.seq_len = config.seq_len
+        self.pred_len = config.pred_len
+        self.is_imgaug = is_imgaug
+        self.imgaug = iaa.Sequential([
+            iaa.SomeOf((0,2),
+            [
+                iaa.AdditiveGaussianNoise(scale=0.08*255, per_channel=True),
+                iaa.AdditiveGaussianNoise(scale=0.08*255),
+                iaa.Multiply((0.5, 1.5)),
+                iaa.GaussianBlur(sigma=(0.0, 0.8)),
+                iaa.Dropout(p=(0, 0.1)),
+                iaa.SaltAndPepper(0.05),
+            ], random_order=True),
+        ])
+        
+        self.data = dict(
+            turns=[],
+            straight_driving=[],
+            stops=[]
+        )
+
+        for town in root:
+            town_data = np.load(f'{self.config.filtered_data_dir}/{town}/filtered_data.npy', allow_pickle=True).item()
+            self.data['turns'].extend(town_data['turns'])
+            self.data['straight_driving'].extend(town_data['straight_driving'])
+            self.data['stops'].extend(town_data['stops'])
+    
+    def __len__(self):
+        """Returns the length of the dataset. """
+        return len(self.data['turns']) + len(self.data['straight_driving']) + len(self.data['stops'])
+
+    def __getitem__(self, index):
+        mode = np.random.choice(['turns','straight_driving','stops'])
+        item = self.data[mode][np.random.randint(0, len(self.data[mode]))]
+        print(item)
+        return item
+        
+
+class CARLA_Data2(Dataset):
 
     def __init__(self, root, config, is_imgaug=True):
         self.config = config

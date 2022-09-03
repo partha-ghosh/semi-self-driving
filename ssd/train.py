@@ -21,7 +21,7 @@ parser.add_argument('--id', type=str, default='aim', help='Unique experiment ide
 parser.add_argument('--device', type=str, default='cuda', help='Device to use')
 parser.add_argument('--epochs', type=int, default=101, help='Number of train epochs.')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate.')
-parser.add_argument('--val_every', type=int, default=3, help='Validation frequency (epochs).')
+parser.add_argument('--val_every', type=int, default=5, help='Validation frequency (epochs).')
 parser.add_argument('--batch_size', type=int, default=24, help='Batch size')
 parser.add_argument('--logdir', type=str, default='log', help='Directory to log data to.')
 
@@ -61,6 +61,7 @@ class Engine(object):
 		self.train_dataloader = None
 		self.val_dataloader = val_dataloader
 		self.ss_dataloader = ss_dataloader
+		self.len_model_parameters = len(list(self.model.parameters()))
 		
 
 	def train(self):
@@ -93,6 +94,7 @@ class Engine(object):
 			
 			gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(args.device, dtype=torch.float32) for i in range(self.config.seq_len, len(data['waypoints']))]
 			gt_waypoints = torch.stack(gt_waypoints, dim=1).to(args.device, dtype=torch.float32)
+			# loss = (1+sum(torch.linalg.norm(p.flatten(), 1) for p in list(self.model.parameters())[(self.len_model_parameters//10):-(self.len_model_parameters//10)])) * F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
 			loss = F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
 			loss.backward()
 			loss_epoch += float(loss.item())

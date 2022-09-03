@@ -13,6 +13,7 @@ test2/
 log_test/
 log_old/
 tmp/
+video*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
