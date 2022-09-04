@@ -9,7 +9,8 @@ class GlobalConfig:
     # root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
     root_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data'
     local_root_dir = f'/mnt/qb/work/geiger/pghosh58/transfuser/data/processed/{os.path.basename(root_dir)}'
-    filtered_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal'
+    # filtered_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal'
+    filtered_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_transfuser_plus_data'
 
     # train_towns = ['Town01', 'Town02', 'Town03', 'Town04']
     # ssd_towns = ['Town01', 'Town02', 'Town03', 'Town04', 'Town06', 'Town07', 'Town10']

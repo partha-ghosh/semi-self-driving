@@ -46,8 +46,18 @@ class CARLA_Data(Dataset):
     def __getitem__(self, index):
         mode = np.random.choice(['turns','straight_driving','stops'])
         item = self.data[mode][np.random.randint(0, len(self.data[mode]))]
-        print(item)
-        return item
+        img = np.array(scale_and_crop_image(Image.open(item['fronts'][0]), scale=self.config.scale, crop=self.config.input_resolution))
+        
+        example = dict(fronts=[])
+        if self.is_imgaug:
+            aug_img = self.imgaug.augment_image(img)
+            # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
+            example['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
+        else:
+            example['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
+        example['waypoints'] = item['waypoints']
+        example['target_point'] = item['target_point']
+        return example
         
 
 class CARLA_Data2(Dataset):

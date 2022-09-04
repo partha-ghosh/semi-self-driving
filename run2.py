@@ -1,7 +1,7 @@
 from run_utils import *
 
 root = os.path.dirname(os.path.abspath(__file__))
-exp_time = '09_03_18_58'#datetime.datetime.now().strftime("%m_%d_%H_%M")
+exp_time = datetime.datetime.now().strftime("%m_%d_%H_%M")
 
 tests = [
     # AIM Baseline

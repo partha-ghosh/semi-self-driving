@@ -104,4 +104,4 @@ leaderboard_evaluator = '''PYTHONPATH=$PYTHONPATH python3 leaderboard/leaderboar
 --record=${RECORD_PATH}
 --resume=${RESUME}
 --port=${PORT}
---trafficManagerPort=${TM_PORT}'''
+--trafficManagerPort=${TM_PORT} &'''

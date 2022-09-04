@@ -113,13 +113,15 @@ def calc_wp(seq_x, seq_y, seq_theta):
 
 
 data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
-dest_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/x'
+# data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data'
+dest_path = '/'.join([('filtered_'+x if '_data' in x else x) for x in data_path.split('/')])
+print(dest_path)
 seq_len = 1
 pred_len = 4
 towns = next(os.walk(data_path))[1]
 
 def worker(routes, data_path, seq_len, pred_len, dest_path):
-    data = []
+    data = dict()
     for route in tqdm.tqdm(routes, desc='route', leave=False):
         scenes = get_scenes(f'{data_path}/{town}/{route}')
         for scene in tqdm.tqdm(scenes, desc='scene', leave=False):
@@ -149,30 +151,39 @@ def worker(routes, data_path, seq_len, pred_len, dest_path):
                     seq_y.append(measurements['y'])
                     seq_theta.append(measurements['theta'])
                 waypoints = calc_wp(seq_x, seq_y, seq_theta)
-                data.append(dict(
+                
+                v1 = np.linalg.norm(data.get(scene.replace(c_img, str(index-1).zfill(4)), {'waypoints':[0,0]})['waypoints'][1])                
+                v2 = np.linalg.norm(data.get(scene.replace(c_img, str(index-2).zfill(4)), {'waypoints':[0,0]})['waypoints'][1])
+                data[scene] = dict(
+                    v2 = v2,
+                    v1 = v1,
                     fronts=[scene],
                     target_point=tuple(local_command_point),
                     waypoints=waypoints
-                ))
+                )
             except:
                 pass
+            # print(data)
+            # input()
     os.system(f'mkdir -p {dest_path}/{town}')
-    np.save(f'{dest_path}/{town}/processed_data.npy', data)
+    np.save(f'{dest_path}/{town}/processed_data.npy', list(data.values()))
 
 
 jobs = []
 for town in tqdm.tqdm(towns, desc='town'):
     routes = next(os.walk(f'{data_path}/{town}'))[1]
+    # worker(routes, data_path, seq_len, pred_len, dest_path)
     p = mp.Process(target=worker, args=(routes, data_path, seq_len, pred_len, dest_path))
     jobs.append(p)
     p.start()
 for p in jobs:
     p.join()
 
+
 for town in tqdm.tqdm(towns, desc='town'):
     data = dict(
         turns=[],
-        straight_driving=[],
+        in_motion=[],
         stops=[]
     )
     town_path = f'{dest_path}/{town}/processed_data.npy'
@@ -198,34 +209,61 @@ for town in tqdm.tqdm(towns, desc='town'):
         
         filtered_theta = savgol_filter(theta_list, 21, 3, mode='nearest')
         steer_indicator = np.where(filtered_theta>0.07,1,0)
-        acc=np.minimum(1/(np.abs(speed_list)+0.01),10)
-        acc = acc[1:]-acc[:-1]
-        acc = np.maximum(savgol_filter(np.abs(acc), 11, 3, mode='nearest'),0)
-        stop_indicator = np.where(acc>0.2,1,0)
-        c_speed = (1-stop_indicator)
-        c_speed = c_speed*(speed_list[1:]>1)
-        # plt.figure()
-        # plt.plot(speed_list,label='speed from wp')
-        # plt.plot(theta_list,label='theta from wp')
-        # plt.plot(acc)
-        # plt.plot(stop_indicator, label='stop wp')
-        # plt.plot(filtered_theta,label='filtered theta from wp')
-        # plt.plot(steer_indicator,label='steer indicator from wp')
-        # plt.plot(c_speed, label='move wp')
-        # plt.legend()
+
+        move_indicator = np.where(speed_list>2 , 1, 0)
+        stop_indicator = 1 - move_indicator
+
+        move_arg_indicator = np.argwhere(move_indicator).flatten()
+        m = min(move_arg_indicator) if len(move_arg_indicator) else 0
+        M = max(move_arg_indicator) if len(move_arg_indicator) else len(stop_indicator)
+        stop_indicator[:m] = 0
+        stop_indicator[M:] = 0
+
+        steer_indicator = steer_indicator * move_indicator
+
+        # acc=np.minimum(1/(np.abs(speed_list)+0.01),10)
+        # acc = acc[1:]-acc[:-1]
+
+        # acc_abs = np.abs(acc)
+        # acc_abs = np.maximum(savgol_filter(acc_abs, 7, 3, mode='nearest'),0)
+        # acc_deacc_indicator = np.where(acc_abs>0.2,1,0)
+        
+        # acc_arg_indicator = np.argwhere(acc<-1).flatten()
+        # deacc_arg_indicator = np.argwhere(acc>1).flatten()
+
+        # stop_indicator = np.zeros_like(acc)
+        # for i in range(len(deacc_arg_indicator)):
+        #     try:
+        #         if deacc_arg_indicator[i] < acc_arg_indicator[i+1]:
+        #             stop_indicator[deacc_arg_indicator[i]:acc_arg_indicator[i+1]] = 1
+        #     except:
+        #         pass
+        
+        # c_speed = (1-stop_indicator)
+        # c_speed = c_speed*(speed_list[1:]>1)
+        plt.figure()
+        plt.plot(speed_list,label='speed from wp')
+        plt.plot(theta_list,label='theta from wp')
+        # plt.plot(acc, label='acc')
+        # plt.plot(acc_abs, label='acc_abs')
+        # plt.plot(acc_deacc_indicator, label='acc_deacc wp')
+        plt.plot(stop_indicator, label='stop wp')
+        plt.plot(filtered_theta,label='filtered theta from wp')
+        plt.plot(steer_indicator*0.5,label='steer indicator from wp')
+        plt.plot(move_indicator, label='move wp')
+        plt.title(f'{route[-50:]}')
+        plt.legend()
         # plt.savefig('x.png')
         # input()
 
-        c_speed = list(c_speed)
-        for i in range(len(seqs)-1):
-            try:
-                if c_speed[i]:
-                    data['straight_driving'].append(seqs[i])
-                if stop_indicator[i] and i > c_speed.index(1):
-                    data['stops'].append(seqs[i])
-                if steer_indicator[i]:
-                    data['turns'].append(seqs[i])
-            except:
-                pass
+        for i in range(len(move_indicator)):
+            if move_indicator[i]:
+                data['in_motion'].append(seqs[i])
+            if stop_indicator[i]:
+                data['stops'].append(seqs[i])
+            if steer_indicator[i]:
+                data['turns'].append(seqs[i])
+        print(data)
+        input()
 
     np.save(f'{dest_path}/{town}/filtered_data.npy', data)
