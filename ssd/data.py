@@ -38,7 +38,7 @@ class CARLA_Data(Dataset):
                 print('There is no pseudolabeled data')
 
 
-        self.length = (len(self.data['turns'])+len(self.data['in_motion'])+len(self.data['stops'])) if len_from_data else 100*64
+        self.length = (len(self.data['turns'])+len(self.data['in_motion'])+len(self.data['stops'])) if len_from_data else 2000*64
 
     def __len__(self):
         """Returns the length of the dataset. """

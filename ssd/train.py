@@ -18,14 +18,7 @@ from imgaug import augmenters as iaa, imgaug
 
 from model import AIM
 
-from trainer import Trainer, step
-# if config['use_nav']:
-# 	AIM.train = train_with_nav
-# if config['use_acc']:
-# 	AIM.train = train_with_acc
-# else:
-Trainer.step = step
-
+from trainer import Trainer
 
 from data import CARLA_Data2
 if config['dataloader'] == 1:

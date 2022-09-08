@@ -1,7 +1,7 @@
 from run_utils import *
 
 root = os.path.dirname(os.path.abspath(__file__))
-exp_time = '09_06_06_23_33'# datetime.datetime.now().strftime("%m_%d_%H_%M_%S")
+exp_time = datetime.datetime.now().strftime("%m_%d_%H_%M_%S")
 
 def gen_config(
     training_type, #s,ss,ssf,ssgt
@@ -86,6 +86,9 @@ def gen_config(
 
         seq_len = 1, # input timesteps
         pred_len = 4, # future waypoints predicted
+        
+        ignore_sides = True, # don't consider side cameras
+        ignore_rear = True, # don't consider rear cameras
 
         input_resolution = 256,
 
@@ -112,11 +115,12 @@ def gen_config(
     return config
 
 
+
 tests = [
     [
-        gen_config(training_type='s',eval=2,epochs=2,test_name='test',val_every=1,)
-        # gen_config(training_type='s',use_acc=1, eval=0,epochs=2,test_name='test',val_every=1,)
-        # gen_config(training_type='s',eval=3,epochs=0)
+        # gen_config(training_type='s',eval=2,epochs=2,test_name='test',val_every=1,)
+        # gen_config(training_type='s',use_acc=2, eval=0,epochs=0,test_name='test',val_every=1,)
+        gen_config(training_type='s',eval=3)
         # gen_config(training_type='s',eval=3,use_acc=2,)
     ],
     # AIM Baseline
@@ -320,7 +324,8 @@ def run_test(tests):
         test_dir = test['test_dir']
         script_dir = test['script_dir']
 
-        test['pseduo_data'] = f'{test["data_dir"]}/pseudo/{test_id}/processed_data.npy'
+        os.system(f'mkdir -p {test["data_dir"]}/pseudo/{test_id}')
+        test['pseudo_data'] = f'{test["data_dir"]}/pseudo/{test_id}/processed_data.npy'
         test['test_id'] = test_id
 
         cmd_trains.append({
@@ -333,10 +338,10 @@ def run_test(tests):
                 f'rsync -a {old_test_dir}/log {test_dir}/ --exclude=*.err --exclude=*.out --exclude=*tfevents*' if test['copy_last_model'] else "",
                 f'cd {test_dir}',
                 f'CUDA_VISIBLE_DEVICES=0 python train.py "{str(test)}"',
-                f'''{f"cp -r {test['pseduo_data']} {test['logdir']}/" if test["training_type"]=="s" else "echo"}''',
+                f'''{f"cp -r {test['pseudo_data']} {test['logdir']}/" if test["training_type"]=="s" else "echo"}''',
 
                 # 3 evaluations
-                f'python {root}/tools/sbatch_submitter.py "sbatch {root}/shell_scripts/run_eval_{test_name}.sh"',
+                *([f'python {root}/tools/sbatch_submitter.py "sbatch {root}/shell_scripts/run_eval_{test_name}.sh"',]*test["eval"]),
                 
                 f'python {root}/tools/sbatch_submitter.py "sbatch {root}/shell_scripts/run_train_{tests[i+1]["test_name"]}.sh"' if i<len(tests)-1 else "",
 
@@ -351,50 +356,28 @@ def run_test(tests):
                 'test_name':test_name,
                 'script_dir':script_dir,
                 'test_dir':test_dir,
-                'cmd': [
-                    f'tm_port=`python {root}/tools/get_carla_port.py`'
+                'cmd':[
+                    f'carla_port=`python /mnt/qb/work/geiger/pghosh58/transfuser/tools/get_carla_port.py`',
+                    f'tm_port=$((port+8000))',
+                    f'echo "carla port: $carla_port"',
+                    f'SDL_VIDEODRIVER=offscreen SDL_HINT_CUDA_DEVICE=0 {root}/carla/CarlaUE4.sh --world-port=$carla_port -opengl &',
+                    f'sleep 60',
+                    f'cd {root}',
+                    common_exports.format(root, test['agent_name'], test_name+'_$SLURM_JOB_ID', f'{test_dir}/log/saved_model'),
+                    '{}'.format(leaderboard_evaluator.format(f'"{str(test)}"').replace("\n", " ")),# f"{test['dir']}/log/{test_name}/eval.txt"),
+                    f'sleep 3',
+                    f'mkdir -p {test_dir}/log/results_$SLURM_JOB_ID',
+                    f'mv {root}/results/{test_name}_$SLURM_JOB_ID.json {test_dir}/log/results_$SLURM_JOB_ID/result.json',
+                    f'python {root}/tools/result_parser.py --xml {root}/leaderboard/data/evaluation_routes/routes_town05_long.xml --town_maps {root}/leaderboard/data/town_maps_xodr --results {test_dir}/log/results_$SLURM_JOB_ID --save_dir {test_dir}/log/results_$SLURM_JOB_ID',
+                    f'pkill -f "port=$carla_port"',
+
+                    f'mv {root}/tmp/$SLURM_JOB_ID.out {test_dir}/log/results_$SLURM_JOB_ID/',
+                    f'mv {root}/tmp/$SLURM_JOB_ID.err {test_dir}/log/results_$SLURM_JOB_ID/',
+                    f'python {root}/tools/run_again.py "{test_dir}/log/results_$SLURM_JOB_ID/$SLURM_JOB_ID.err" "sbatch /mnt/qb/work/geiger/pghosh58/transfuser/shell_scripts/run_eval_{test_name}.sh"',
+
                 ]
             }
         )
-
-        for i in range(test['eval']):
-            cmd_evals[-1]['cmd'].extend(
-                [
-                    f'carla_port_{i}=`python {root}/tools/get_carla_port.py`',
-                    # f'tm_port=$((port+8000))',
-                    f'echo "carla port: $carla_port_{i}"',
-                    f'SDL_VIDEODRIVER=offscreen SDL_HINT_CUDA_DEVICE=0 {root}/carla/CarlaUE4.sh --world-port=$carla_port_{i} -opengl &',
-                    f'sleep 60',
-                    f'cd {root}',
-                    common_exports.format(root, f'$carla_port_{i}', test['agent_name'], test_name+f'_$SLURM_JOB_ID{i}', f'{test_dir}/log/saved_model'),
-                    '{}'.format(leaderboard_evaluator.format(f'"{str(test)}"').replace("\n", " ")),# f"{test['dir']}/log/{test_name}/eval.txt"),
-                    f'pid_{i}=$!',
-                    f'sleep 3',
-                    f'mkdir -p {test_dir}/log/results_$SLURM_JOB_ID{i}',
-                    # f'mv {root}/results/{test_name}_$SLURM_JOB_ID{i}.json {test_dir}/log/results_$SLURM_JOB_ID{i}/result.json',
-                    # f'python {root}/tools/result_parser.py --xml {root}/leaderboard/data/evaluation_routes/routes_town05_long.xml --town_maps {root}/leaderboard/data/town_maps_xodr --results {test_dir}/log/results_$SLURM_JOB_ID{i} --save_dir {test_dir}/log/results_$SLURM_JOB_ID{i} &',
-                    # f'pkill -f "port=$carla_port"',
-                ]
-            )
-        cmd_evals[-1]['cmd'].append('wait {}'.format(" ".join([f"$pid_{i}" for i in range(test['eval'])])))
-        for i in range(test['eval']):
-            cmd_evals[-1]['cmd'].extend(
-                [
-                    f'pkill -f "port=$carla_port_{i}"',
-                    f'mv {root}/results/{test_name}_$SLURM_JOB_ID{i}.json {test_dir}/log/results_$SLURM_JOB_ID{i}/result.json',
-                    f'python {root}/tools/result_parser.py --xml {root}/leaderboard/data/evaluation_routes/routes_town05_long.xml --town_maps {root}/leaderboard/data/town_maps_xodr --results {test_dir}/log/results_$SLURM_JOB_ID{i} --save_dir {test_dir}/log/results_$SLURM_JOB_ID{i}'
-                ]
-            )
-        cmd_evals[-1]['cmd'].extend(
-            [   
-                f'mv {root}/tmp/$SLURM_JOB_ID.out {test_dir}/log/results_$SLURM_JOB_ID/',
-                f'mv {root}/tmp/$SLURM_JOB_ID.err {test_dir}/log/results_$SLURM_JOB_ID/',
-                f'python {root}/tools/run_again.py "{test_dir}/log/results_$SLURM_JOB_ID/$SLURM_JOB_ID.err" "sbatch {root}/shell_scripts/run_eval_{test_name}.sh"',
-
-            ]
-        )
-
-
 
     for i, cmd_train in enumerate(cmd_trains):
         with open(f'shell_scripts/run_train_{cmd_train["test_name"]}.sh', 'w') as f:

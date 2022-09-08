@@ -75,7 +75,7 @@ PYTHONPATH=$PYTHONPATH:leaderboard/team_code
 PYTHONPATH=$PYTHONPATH:scenario_runner
 LEADERBOARD_ROOT=leaderboard
 CHALLENGE_TRACK_CODENAME=SENSORS
-PORT={}
+PORT=$carla_port
 TM_PORT=$tm_port
 DEBUG_CHALLENGE=0
 REPETITIONS=1
@@ -105,4 +105,4 @@ leaderboard_evaluator = '''PYTHONPATH=$PYTHONPATH python3 leaderboard/leaderboar
 --resume=${{RESUME}}
 --port=${{PORT}}
 --trafficManagerPort=${{TM_PORT}}
---conf={} &'''
+--conf={}'''

@@ -178,18 +178,19 @@ jobs = []
 for town in tqdm.tqdm(towns, desc='town'):
     routes = next(os.walk(f'{data_path}/{town}'))[1]
     # worker(routes, data_path, seq_len, pred_len, dest_path)
-    p = mp.Process(target=worker, args=(routes, data_path, seq_len, pred_len, dest_path))
-    jobs.append(p)
-    p.start()
-for p in jobs:
-    p.join()
+#     p = mp.Process(target=worker, args=(routes, data_path, seq_len, pred_len, dest_path))
+#     jobs.append(p)
+#     p.start()
+# for p in jobs:
+#     p.join()
 
 
 for town in tqdm.tqdm(towns, desc='town'):
     data = dict(
         turns=[],
         in_motion=[],
-        stops=[]
+        long_stops=[],
+        short_stops=[],
     )
     town_path = f'{dest_path}/{town}/processed_data.npy'
     processed_data = np.load(town_path, allow_pickle=True)
@@ -224,10 +225,15 @@ for town in tqdm.tqdm(towns, desc='town'):
         stop_indicator[:m] = 0
         stop_indicator[M:] = 0
 
-        window_size = 3
-        stop_indicator_copy = deepcopy(stop_indicator)
+        window_size = 2
+        short_stop_indicator = np.zeros_like(stop_indicator)
+        long_stop_indicator = np.zeros_like(stop_indicator)
         for i in range(window_size, len(stop_indicator)-window_size-1):
-            stop_indicator[i] = (stop_indicator[i] if (stop_indicator_copy[i-window_size:i+window_size+1]==0).any() else 0)
+            window = stop_indicator[i-window_size:i+window_size+1]
+            if (window==0).any() and (window==1).any():
+                short_stop_indicator[i] = 1
+            elif (window==1).all():
+                long_stop_indicator[i] = 1
 
         steer_indicator = steer_indicator * move_indicator
         window_size = 1
@@ -235,23 +241,27 @@ for town in tqdm.tqdm(towns, desc='town'):
         for i in range(window_size, len(steer_indicator)-window_size-1):
             steer_indicator[i] = (1 if (steer_indicator_copy[i-window_size:i+window_size+1]==1).any() else steer_indicator[i])
 
-        # plt.figure()
-        # plt.plot(speed_list,label='speed from wp')
-        # plt.plot(theta_list,label='theta from wp')
-        # plt.plot(stop_indicator*0.75, label='stop wp')
-        # # plt.plot(filtered_theta,label='filtered theta from wp')
-        # plt.plot(steer_indicator*0.5,label='steer indicator from wp')
-        # plt.plot(move_indicator, label='move wp')
-        # plt.title(f'{route[-50:]}')
-        # plt.legend()
-        # plt.savefig('x.png')
-        # input()
+        plt.figure()
+        plt.plot(speed_list,label='speed from wp')
+        plt.plot(theta_list,label='theta from wp')
+        plt.plot(stop_indicator*0.75, label='stop wp')
+        plt.plot(long_stop_indicator*0.66, label='long stop wp')
+        plt.plot(short_stop_indicator*1.25, label='short stop wp')
+        # plt.plot(filtered_theta,label='filtered theta from wp')
+        plt.plot(steer_indicator*0.5,label='steer indicator from wp')
+        plt.plot(move_indicator, label='move wp')
+        plt.title(f'{route[-50:]}')
+        plt.legend()
+        plt.savefig('x.png')
+        input()
 
         for i in range(len(move_indicator)):
             if move_indicator[i]:
                 data['in_motion'].append(seqs[i])
-            if stop_indicator[i]:
-                data['stops'].append(seqs[i])
+            if long_stop_indicator[i]:
+                data['long_stops'].append(seqs[i])
+            if short_stop_indicator[i]:
+                data['short_stops'].append(seqs[i])
             if steer_indicator[i]:
                 data['turns'].append(seqs[i])
         # print(data)

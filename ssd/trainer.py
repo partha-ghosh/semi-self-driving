@@ -115,11 +115,6 @@ class Trainer(object):
 			torch.save(self.optimizer.state_dict(), os.path.join(self.config['logdir'], 'best_optim.pth'))
 			tqdm.write('====== Overwrote best model ======>')	
 
-	def get_labels(self):
-		pass
-
-	def step(self, data):
-		pass
 
 	def loss_fn(self, pred, gt):
 		if self.config['predict_confidence']:
@@ -135,82 +130,83 @@ class Trainer(object):
 		else:
 			return F.l1_loss(pred, gt, reduction='none').mean()
 
+	def get_labels(self):
+		self.model.eval()
+		pseudo_data_path = self.config['pseudo_data']
 
+		data_dict = dict()
+		with torch.no_grad():	
 
-def step(self, data):
-	
-	# create batch and move to GPU
-	fronts_in = data['fronts']
-	fronts = []
-	for i in range(self.config['seq_len']):
-		fronts.append(fronts_in[i].to(self.config['device'], dtype=torch.float32))
-
-	# target point
-	# gt_velocity = data['velocity'].to(self.config['device'], dtype=torch.float32)
-	target_point = torch.stack(data['target_point'], dim=1).to(self.config['device'], dtype=torch.float32)
-	nav_command = data['nav_command'].to(self.config['device'])
-	
-	v1 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)
-	v2 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)
-	
-	# inference
-	encoding = [self.model.image_encoder(fronts)]
-	
-	pred_wp = self.model(feature_emb=encoding, v1=v1, v2=v2, target_point=target_point, nav_command=nav_command)
-	
-	gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(self.config['device'], dtype=torch.float32) for i in range(self.config['seq_len'], len(data['waypoints']))]
-	gt_waypoints = torch.stack(gt_waypoints, dim=1).to(self.config['device'], dtype=torch.float32)
-	
-
-	# if not torch.isfinite(target_point).all(): print('target_point', target_point)
-	# if not torch.isfinite(command).all(): print('command', command)
-	# if not torch.isfinite(v1).all(): print('v1', v1)
-	# if not torch.isfinite(v2).all(): print('v2', v2)
-	# for front in fronts:
-	# 	if not torch.isfinite(front).all(): print('front', front)
-	# for enc in encoding:
-	# 	if not torch.isfinite(enc).all(): print('enc', enc)
-	# if not torch.isfinite(pred_wp).all(): print('pred_wp', pred_wp)
-	# if not torch.isfinite(gt_waypoints).all(): print('gt_waypoints', gt_waypoints)
-
-	# loss = (1+sum(torch.linalg.norm(p.flatten(), 1) for p in list(self.model.parameters())[(self.len_model_parameters//10):-(self.len_model_parameters//10)])) * F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
-	loss = self.loss_fn(pred_wp, gt_waypoints)
-	return loss, [data['scene'], v1, v2, target_point, nav_command, pred_wp, gt_waypoints]
-
-
-
-def get_labels(self):
-	self.model.eval()
-	pseudo_data_path = self.config['pseudo_data']
-
-	data_dict = dict()
-	with torch.no_grad():	
-
-		# Validation loop
-		for data in tqdm(self.ss_dataloader):
-			
-			scenes, fronts, v1s, v2s, target_points, nav_commands, pred_wp, gt_waypoints = self.step(data)[1]
-			for i in range(len(scenes)):
+			# Validation loop
+			for data in tqdm(self.ss_dataloader):
 				
-				if self.config['predict_confidence']:
-					if pred_wp[i][len(pred_wp[0])-1][2].item() < self.config['confidence_threshold']:
-						continue
+				scenes, v1s, v2s, target_points, nav_commands, pred_wp, gt_waypoints = self.step(data)[1]
+				for i in range(len(scenes)):
+					
+					if self.config['predict_confidence']:
+						if pred_wp[i][len(pred_wp[0])-1][2].item() < self.config['confidence_threshold']:
+							continue
 
-				data_dict[scenes[i]] = dict(
-                    v2 = v2s[i].item(),
-                    v1 = v1s[i].item(),
-                    scene=scenes[i],
-                    target_point=target_points[i].item(),
-					waypoints=[],
-					nav_command=nav_commands[i].cpu(),
-                )
+					data_dict[scenes[i]] = dict(
+						v2 = v2s[i].item(),
+						v1 = v1s[i].item(),
+						scene=scenes[i],
+						target_point=target_points[i].cpu(),
+						waypoints=[],
+						nav_command=nav_commands[i].cpu(),
+					)
 
-				data_dict[scenes[i]]['waypoints'].append((0.0,0.0))
-				for j in range(len(pred_wp[0])):
-					data_dict[scenes[i]]['waypoints'].append((pred_wp[i][j][0].item(), pred_wp[i][j][1].item()))
-				
-				if self.config['predict_confidence']:
-					data_dict[scenes[i]]['confidence'] = pred_wp[i][len(pred_wp[0])-1][2].item()
-    
-	np.save(pseudo_data_path, list(data_dict.values()))
+					data_dict[scenes[i]]['waypoints'].append((0.0,0.0))
+					for j in range(len(pred_wp[0])):
+						data_dict[scenes[i]]['waypoints'].append((pred_wp[i][j][0].item(), pred_wp[i][j][1].item()))
+					
+					if self.config['predict_confidence']:
+						data_dict[scenes[i]]['confidence'] = pred_wp[i][len(pred_wp[0])-1][2].item()
+		
+		np.save(pseudo_data_path, list(data_dict.values()))
+
+
+
+	def step(self, data):
+		
+		# create batch and move to GPU
+		fronts_in = data['fronts']
+		fronts = []
+		for i in range(self.config['seq_len']):
+			fronts.append(fronts_in[i].to(self.config['device'], dtype=torch.float32))
+
+		# target point
+		# gt_velocity = data['velocity'].to(self.config['device'], dtype=torch.float32)
+		target_point = torch.stack(data['target_point'], dim=1).to(self.config['device'], dtype=torch.float32)
+		nav_command = data['nav_command'].to(self.config['device'])
+		
+		v1 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)
+		v2 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)
+		
+		# inference
+		encoding = [self.model.image_encoder(fronts)]
+		
+		pred_wp = self.model(feature_emb=encoding, v1=v1, v2=v2, target_point=target_point, nav_command=nav_command)
+		
+		gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(self.config['device'], dtype=torch.float32) for i in range(self.config['seq_len'], len(data['waypoints']))]
+		gt_waypoints = torch.stack(gt_waypoints, dim=1).to(self.config['device'], dtype=torch.float32)
+		
+
+		# if not torch.isfinite(target_point).all(): print('target_point', target_point)
+		# if not torch.isfinite(command).all(): print('command', command)
+		# if not torch.isfinite(v1).all(): print('v1', v1)
+		# if not torch.isfinite(v2).all(): print('v2', v2)
+		# for front in fronts:
+		# 	if not torch.isfinite(front).all(): print('front', front)
+		# for enc in encoding:
+		# 	if not torch.isfinite(enc).all(): print('enc', enc)
+		# if not torch.isfinite(pred_wp).all(): print('pred_wp', pred_wp)
+		# if not torch.isfinite(gt_waypoints).all(): print('gt_waypoints', gt_waypoints)
+
+		# loss = (1+sum(torch.linalg.norm(p.flatten(), 1) for p in list(self.model.parameters())[(self.len_model_parameters//10):-(self.len_model_parameters//10)])) * F.l1_loss(pred_wp, gt_waypoints, reduction='none').mean()
+		loss = self.loss_fn(pred_wp, gt_waypoints)
+		return loss, [data['scene'], v1, v2, target_point, nav_command, pred_wp, gt_waypoints]
+
+
+
 
