@@ -72,12 +72,12 @@ class AIM(nn.Module):
 
     def __init__(self, config, device):
         super().__init__()
-        self.pred_len = config['pred_len']
+        self.pred_len = config.pred_len
         self.config = config
         self.device = device
 
-        self.turn_controller = PIDController(K_P=config['turn_KP'], K_I=config['turn_KI'], K_D=config['turn_KD'], n=config['turn_n'])
-        self.speed_controller = PIDController(K_P=config['speed_KP'], K_I=config['speed_KI'], K_D=config['speed_KD'], n=config['speed_n'])
+        self.turn_controller = PIDController(K_P=config.turn_KP, K_I=config.turn_KI, K_D=config.turn_KD, n=config.turn_n)
+        self.speed_controller = PIDController(K_P=config.speed_KP, K_I=config.speed_KI, K_D=config.speed_KD, n=config.speed_n)
 
         self.image_encoder = ImageCNN(512, normalize=True).to(self.device)
 
@@ -89,39 +89,17 @@ class AIM(nn.Module):
                             nn.Linear(128, 64),
                             nn.ReLU(inplace=True),
                         ).to(self.device)
-        
-        if self.config['use_nav']:
-            self.proj_nav_command = nn.Sequential(
-                                nn.Linear(6, 16),
+        self.decoder = nn.GRUCell(input_size=4, hidden_size=64).to(self.device)
+        self.output = nn.Linear(64, 2).to(self.device)
+        self.proj_acc = nn.Sequential(
+                                nn.Linear(self.config['use_acc'], 16),
                                 nn.ReLU(inplace=True),
                                 nn.Linear(16, 32),
                                 nn.ReLU(inplace=True),
                                 nn.Linear(32, 64),
                             ).to(self.device)
 
-        if self.config['use_acc']:
-            self.proj_acc = nn.Sequential(
-                                    nn.Linear(self.config['use_acc'], 16),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(16, 32),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(32, 64),
-                                ).to(self.device)
-
-        
-        if self.config['use_target_point']:
-            self.decoder = nn.GRUCell(input_size=4, hidden_size=64).to(self.device)
-        else:
-            self.decoder = nn.GRUCell(input_size=2, hidden_size=64).to(self.device)
-        
-        
-        if self.config['predict_confidence']:
-            self.output = nn.Linear(64, 3).to(self.device)
-        else:
-            self.output = nn.Linear(64, 2).to(self.device)
-
-
-    def forward(self, feature_emb, v1, v2, target_point, nav_command):
+    def forward(self, feature_emb, v1, v2, target_point):
         '''
         Predicts future waypoints from image features and target point (goal location)
         Args:
@@ -130,34 +108,19 @@ class AIM(nn.Module):
         '''
         feature_emb = sum(feature_emb)
         z = self.join(feature_emb)
-        if self.config['use_nav']:
-            z = z + self.proj_nav_command(nav_command)
-
-        if self.config['use_acc']:
-            if self.config['use_acc'] == 1:
-                z = z + self.proj_acc(v1)
-            if self.config['use_acc'] == 2:
-                z = z + self.proj_acc(torch.cat((v1,v2), dim=1))
-
+        z = z + self.proj_acc(torch.cat((v1,v2), dim=1))
         output_wp = list()
-        
+
         # initial input variable to GRU
         x = torch.zeros(size=(z.shape[0], 2), dtype=z.dtype).to(self.device)
-        
+
         # autoregressive generation of output waypoints
         for _ in range(self.pred_len):
-            if self.config['use_target_point']:
-                x_in = torch.cat([x, target_point], dim=1)
-            else:
-                x_in = x
+            x_in = torch.cat([x, target_point], dim=1)
             z = self.decoder(x_in, z)
             dx = self.output(z)
-            x = dx[:,:2] + x
+            x = dx + x
             output_wp.append(x)
-
-            if self.config['predict_confidence']:
-                output_wp.append(torch.cat((x, torch.sigmoid(torch.clip(dx[:,2].reshape((-1,1)), -3, 3))), dim=1))
-
 
         pred_wp = torch.stack(output_wp, dim=1)
 
@@ -183,11 +146,11 @@ class AIM(nn.Module):
         steer = np.clip(steer, -1.0, 1.0)
 
         desired_speed = np.linalg.norm(waypoints[0] - waypoints[1]) * 2.0
-        brake = desired_speed < self.config['brake_speed'] or (speed / desired_speed) > self.config['brake_ratio']
+        brake = desired_speed < self.config.brake_speed or (speed / desired_speed) > self.config.brake_ratio
 
-        delta = np.clip(desired_speed - speed, 0.0, self.config['clip_delta'])
+        delta = np.clip(desired_speed - speed, 0.0, self.config.clip_delta)
         throttle = self.speed_controller.step(delta)
-        throttle = np.clip(throttle, 0.0, self.config['max_throttle'])
+        throttle = np.clip(throttle, 0.0, self.config.max_throttle)
         throttle = throttle if not brake else 0.0
 
         metadata = {
@@ -204,4 +167,3 @@ class AIM(nn.Module):
         }
 
         return steer, throttle, brake, metadata
-

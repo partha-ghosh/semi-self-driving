@@ -95,7 +95,9 @@ class LeaderboardEvaluator(object):
         module_name = os.path.basename(args.agent).split('.')[0]
         sys.path.insert(0, os.path.dirname(args.agent))
         self.module_agent = importlib.import_module(module_name)
-
+        agent_class_name = getattr(self.module_agent, 'get_entry_point')()
+        setattr(getattr(self.module_agent, agent_class_name), 'conf', args.conf)
+        
         # Create the ScenarioManager
         self.manager = ScenarioManager(args.timeout, args.debug > 1)
 
@@ -467,7 +469,7 @@ def main():
     parser.add_argument("--checkpoint", type=str,
                         default='./simulation_results.json',
                         help="Path to checkpoint used for saving statistics and resuming")
-
+    parser.add_argument("--conf", type=str)
     arguments = parser.parse_args()
 
     statistics_manager = StatisticsManager()

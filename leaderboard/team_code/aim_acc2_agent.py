@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 
 from leaderboard.autoagents import autonomous_agent
-from ssd.model import AIM
+from aim.model_acc2 import AIM
 from aim.config import GlobalConfig
 from aim.data import scale_and_crop_image
 from team_code.planner import RoutePlanner
@@ -24,7 +24,6 @@ SAVE_PATH = os.environ.get('SAVE_PATH', None)
 
 def get_entry_point():
 	return 'AIMAgent'
-
 
 
 class AIMAgent(autonomous_agent.AutonomousAgent):
@@ -38,24 +37,11 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 		self.input_buffer = {'rgb': deque(), 'rgb_left': deque(), 'rgb_right': deque(), 
 							'rgb_rear': deque(), 'gps': deque(), 'thetas': deque()}
 
-
-		class Dict2Class(object):
-      
-			def __init__(self, my_dict):
-				
-				for key in my_dict:
-					setattr(self, key, my_dict[key])
-		
-		# self.config = GlobalConfig()
-		exec(f'self.conf = {self.conf}')
-		self.config = Dict2Class(self.conf)
-		self.net = AIM(self.conf, 'cuda')
+		self.config = GlobalConfig()
+		self.net = AIM(self.config, 'cuda')
 		self.net.load_state_dict(torch.load(os.path.join(path_to_conf_file, 'best_model.pth')))
 		self.net.cuda()
 		self.net.eval()
-
-		self.v1 = 0.2
-		self.v2 = 0.2
 
 		self.save_path = None
 		if SAVE_PATH is not None:
@@ -70,6 +56,9 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 
 			(self.save_path / 'rgb').mkdir()
 			(self.save_path / 'meta').mkdir()
+		
+		self.v1 = 2
+		self.v2 = 2
 
 	def _init(self):
 		self._route_planner = RoutePlanner(4.0, 50.0)
@@ -231,14 +220,14 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 			self.input_buffer['rgb_rear'].append(rgb_rear.to('cuda', dtype=torch.float32))
 			encoding.append(self.net.image_encoder(list(self.input_buffer['rgb_rear'])))
 
-		v1 = torch.tensor([[self.v1]]).to('cuda', dtype=torch.float32)
-		v2 = torch.tensor([[self.v2]]).to('cuda', dtype=torch.float32)
-		
-		pred_wp = self.net(feature_emb=encoding, v1=v1, v2=v2, target_point=target_point, nav_command=command)
+		v1 = torch.tensor([[self.v1]])
+		v2 = torch.tensor([[self.v2]])
+
+		pred_wp = self.net(encoding, v1, v2, target_point)
 
 		self.v2 = self.v1
-		self.v1 = torch.norm(pred_wp[0][1]).cpu().item()
-		
+		self.v2 = torch.norm(pred_wp[0][1]).item()
+
 		steer, throttle, brake, metadata = self.net.control_pid(pred_wp, gt_velocity)
 		self.pid_metadata = metadata
 

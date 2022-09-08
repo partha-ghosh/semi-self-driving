@@ -12,6 +12,6 @@
 
 scontrol show job $SLURM_JOB_ID 
 cd /mnt/qb/work/geiger/pghosh58/transfuser
-CUDA_VISIBLE_DEVICES=0 python ./ngrok/ngrok.py
+CUDA_VISIBLE_DEVICES=0 python test.py
 mv $SLURM_JOB_ID.out out.txt
 mv $SLURM_JOB_ID.err err.txt

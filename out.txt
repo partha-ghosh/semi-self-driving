@@ -1,0 +1,50 @@
+JobId=1779789 JobName=CILRS
+   UserId=pghosh58(4488) GroupId=geiger(4009) MCS_label=N/A
+   Priority=4119 Nice=0 Account=geiger QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:02 TimeLimit=2-00:00:00 TimeMin=N/A
+   SubmitTime=2022-09-07T00:27:51 EligibleTime=2022-09-07T00:27:51
+   AccrueTime=2022-09-07T00:27:52
+   StartTime=2022-09-07T00:28:20 EndTime=2022-09-09T00:28:20 Deadline=N/A
+   PreemptEligibleTime=2022-09-07T00:29:20 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2022-09-07T00:28:20
+   Partition=gpu-2080ti AllocNode:Sid=bg-slurmb-1:2824789
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=slurm-bm-57
+   BatchHost=slurm-bm-57
+   NumNodes=1 NumCPUs=8 NumTasks=1 CPUs/Task=8 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=8,mem=32G,node=1,billing=2,gres/gpu=1,gres/gpu:rtx2080ti=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=8 MinMemoryNode=32G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/mnt/qb/work/geiger/pghosh58/transfuser/run.sh
+   WorkDir=/mnt/qb/work/geiger/pghosh58/transfuser
+   StdErr=/mnt/qb/work/geiger/pghosh58/transfuser/1779789.err
+   StdIn=/dev/null
+   StdOut=/mnt/qb/work/geiger/pghosh58/transfuser/1779789.out
+   Power=
+   TresPerNode=gpu:rtx2080ti:1
+   NtasksPerTRES:0
+
+Wed Sep  7 00:28:22 2022       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 495.29.05    Driver Version: 495.29.05    CUDA Version: 11.5     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA GeForce ...  On   | 00000000:61:00.0 Off |                  N/A |
+|  0%   35C    P8     1W / 250W |      1MiB / 11019MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
