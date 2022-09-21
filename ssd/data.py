@@ -19,65 +19,76 @@ class CARLA_Data(Dataset):
         self.data = dict(
             turns=[],
             in_motion=[],
-            stops=[]
+            long_stops=[],
+            short_stops=[],
         )
 
         for town in towns:
             town_data = np.load(f'{self.config["data_dir"]}/{town}/filtered_data.npy', allow_pickle=True).item()
             self.data['turns'].extend(town_data['turns'])
             self.data['in_motion'].extend(town_data['in_motion'])
-            self.data['stops'].extend(town_data['stops'])
+            self.data['long_stops'].extend(town_data['long_stops'])
+            self.data['short_stops'].extend(town_data['short_stops'])
     
         if use_pseudo_data:
             try:
+                print("Importing pseudo data")
                 ssd_data = np.load(f'{self.config["data_dir"]}/pseudo/{self.config["test_id"]}/filtered_data.npy', allow_pickle=True).item()
                 self.data['turns'].extend(ssd_data['turns'])
                 self.data['in_motion'].extend(ssd_data['in_motion'])
-                self.data['stops'].extend(ssd_data['stops'])
+                self.data['long_stops'].extend(ssd_data['long_stops'])
+                self.data['short_stops'].extend(ssd_data['short_stops'])
             except:
                 print('There is no pseudolabeled data')
 
 
-        self.length = (len(self.data['turns'])+len(self.data['in_motion'])+len(self.data['stops'])) if len_from_data else 2000*64
+        self.length = (len(self.data['turns'])+len(self.data['in_motion'])+len(self.data['long_stops'])+len(self.data['short_stops'])) if len_from_data else 2000*64
 
     def __len__(self):
         """Returns the length of the dataset. """
         return self.length
 
     def __getitem__(self, index):
-        mode = np.random.choice(['turns','in_motion','stops'])
-        index = np.random.randint(0, len(self.data[mode]))
-        item = self.data[mode][index]
-        img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
-        
-        example = deepcopy(item)
-        example['fronts'] = []
-        if self.imgaug is None:
-            example['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
-        else:
-            aug_img = self.imgaug.augment_image(img)
-            # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
-            example['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
-        
-        return example
+        try:
+            mode = np.random.choice(['turns','in_motion','long_stops', 'short_stops'], p=[0.15, 0.3, 0.25, 0.3])
+            index = np.random.randint(0, len(self.data[mode]))
+            item = self.data[mode][index]
+            img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
+            
+            example = deepcopy(item)
+            example['fronts'] = []
+            if self.imgaug is None:
+                example['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
+            else:
+                aug_img = self.imgaug.augment_image(img)
+                # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
+                example['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
+
+            return example
+            
+        except:
+            return self.__getitem__(index)
         
 class CARLA_Data2(Dataset):
-    def __init__(self, towns, config, len_from_data=False, imgaug=None, use_pseudo_data=False) -> None:
+    def __init__(self, towns, config, len_from_data=False, imgaug=None, use_pseudo_data=False, what_if=False) -> None:
         print("Old Dataloader")
 
         self.config = config
         self.seq_len = config['seq_len']
         self.pred_len = config['pred_len']
         self.imgaug = imgaug
+        self.what_if = what_if
+        self.len_from_data = len_from_data
         
         self.data = []
 
         for town in towns:
             town_data = np.load(f'{self.config["data_dir"]}/{town}/processed_data.npy', allow_pickle=True)
             self.data.extend(town_data)
-
+        
         if use_pseudo_data:
             try:
+                print("Importing pseudo data")
                 ssd_data = np.load(f'{self.config["data_dir"]}/pseudo/{self.config["test_id"]}/processed_data.npy', allow_pickle=True).item()
                 self.data.extend(ssd_data)
             except:
@@ -90,7 +101,8 @@ class CARLA_Data2(Dataset):
         return self.length
 
     def __getitem__(self, index):
-        index = np.random.randint(0, len(self.data))
+        if not self.len_from_data:
+            index = np.random.randint(0, len(self.data))
         item = self.data[index]
         img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
         
@@ -103,6 +115,15 @@ class CARLA_Data2(Dataset):
             # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
             example['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
         
+        if self.what_if:
+            example['nav_command'] = np.zeros(6)
+            example['nav_command'][np.random.randint(0,4)] = 1
+
+            theta = np.random.random() * np.pi
+            example['target_point'] = (50*np.random.random()) * np.array([np.cos(theta), np.sin(theta)])
+            example['target_point'][1] = -example['target_point'][1]
+            example['target_point'] = tuple(example['target_point'])
+
         return example
 
 
@@ -331,13 +352,15 @@ def scale_and_crop_image(image, scale=1, crop=256):
     """
     Scale and crop a PIL image, returning a channels-first numpy array.
     """
-    (width, height) = (int(image.width // scale), int(image.height // scale))
-    im_resized = image.resize((width, height))
-    image = np.asarray(im_resized)
-    start_x = height//2 - crop//2
-    start_y = width//2 - crop//2
-    cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
+    # (width, height) = (int(image.width // scale), int(image.height // scale))
+    # im_resized = image.resize((width, height))
+    # image = np.asarray(im_resized)
+    # start_x = height//2 - crop//2
+    # start_y = width//2 - crop//2
+    # cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
+    
     # cropped_image = np.transpose(cropped_image, (2,0,1))
+    cropped_image = image
     return cropped_image
 
 

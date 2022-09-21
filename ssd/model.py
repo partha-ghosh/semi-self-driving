@@ -153,10 +153,11 @@ class AIM(nn.Module):
             z = self.decoder(x_in, z)
             dx = self.output(z)
             x = dx[:,:2] + x
-            output_wp.append(x)
 
             if self.config['predict_confidence']:
                 output_wp.append(torch.cat((x, torch.sigmoid(torch.clip(dx[:,2].reshape((-1,1)), -3, 3))), dim=1))
+            else:
+                output_wp.append(x)
 
 
         pred_wp = torch.stack(output_wp, dim=1)

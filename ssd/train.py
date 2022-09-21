@@ -14,6 +14,7 @@ import torch.nn.functional as F
 torch.autograd.set_detect_anomaly(True)
 torch.backends.cudnn.benchmark = True
 
+from utils import filter_data
 from imgaug import augmenters as iaa, imgaug
 
 from model import AIM
@@ -53,17 +54,15 @@ writer = SummaryWriter(log_dir=config['logdir'])
 
 # Data
 # train_set = CARLA_Data(root=config.train_data, config=config)
-ssd_set = CARLA_Data2(towns=config['self_supervised_towns'], config=config, imgaug=None, len_from_data=True)
 val_set = CARLA_Data(towns=config['validation_towns'], config=config, imgaug=None, len_from_data=True)
 
 # dataloader_train = DataLoader(train_set, batch_size=config['batch_size'], shuffle=True, num_workers=8, pin_memory=True)
-dataloader_ssd = DataLoader(ssd_set, batch_size=config['batch_size'], shuffle=False, num_workers=8, pin_memory=True)
 dataloader_val = DataLoader(val_set, batch_size=config['batch_size'], shuffle=False, num_workers=8, pin_memory=True)
 
 # Model
 model = AIM(config, config['device'])
 optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
-trainer = Trainer(config=config, writer=writer, model=model, optimizer=optimizer, val_dataloader=dataloader_val, ss_dataloader=dataloader_ssd)
+trainer = Trainer(config=config, writer=writer, model=model, optimizer=optimizer)
 
 model_parameters = filter(lambda p: p.requires_grad, model.parameters())
 params = sum([np.prod(p.size()) for p in model_parameters])
@@ -71,10 +70,16 @@ print ('Total trainable parameters: ', params)
 
 if config['load_model']:
     try:
-        model.load_state_dict(torch.load(os.path.join(config['logdir'], 'model.pth')))
-        print("model loaded")
+        model.load_state_dict(torch.load(config['load_model']))
+        print(f"model loaded from {config['load_model']}")
     except:
-        raise 'failed to load the model'
+        try:
+            model.load_state_dict(torch.load(os.path.join(config['logdir'], 'model.pth')))
+            print("model loaded local saved model")
+        except:
+            raise 'failed to load the model'
+
+trainer.val_dataloader = dataloader_val
 
 if config['training_type'][:2] == 'ss':
     if config['training_type'] == 'ssf':
@@ -94,8 +99,9 @@ if config['training_type'][:2] == 'ss':
         if epoch % config['val_every'] == 0: 
             trainer.validate()
             trainer.save()
-    print("Collect Labels")
-    trainer.get_labels()
+
+    # print("Collect Labels")
+    # trainer.get_labels()
 
 if config['training_type'] == 'ssf':
     print("Fine Tuning")
@@ -120,5 +126,26 @@ if config['training_type'] == 's':
         if epoch % config['val_every'] == 0: 
             trainer.validate()
             trainer.save()
+    trainer.save()
+
     print("Collect Labels")
+    ssd_set = CARLA_Data2(towns=config['self_supervised_towns'], config=config, imgaug=None, len_from_data=True)
+    dataloader_ssd = DataLoader(ssd_set, batch_size=config['batch_size'], shuffle=False, num_workers=8, pin_memory=True)
+    trainer.ss_dataloader = dataloader_ssd
     trainer.get_labels()
+
+    ssd_set = CARLA_Data2(towns=config['self_supervised_towns'], config=config, imgaug=None, len_from_data=True, what_if=True)
+    dataloader_ssd = DataLoader(ssd_set, batch_size=config['batch_size'], shuffle=False, num_workers=8, pin_memory=True)
+    trainer.ss_dataloader = dataloader_ssd
+    for _ in range(config['what_if']):
+        trainer.get_labels()
+
+    data = dict(
+        turns=[],
+        in_motion=[],
+        long_stops=[],
+        short_stops=[],
+    )
+    filter_data(config['pseudo_data'], data)
+    np.save(config['pseudo_data'].replace('processed', 'filtered'), data)
+    print(f"filtered data saved at {config['pseudo_data'].replace('processed', 'filtered')}")

@@ -15,20 +15,20 @@ class Trainer(object):
 		
 	"""
 
-	def __init__(self, config, model, optimizer, val_dataloader, ss_dataloader, writer, cur_epoch=0, cur_iter=0):
+	def __init__(self, config, model, optimizer, writer, cur_epoch=0, cur_iter=0):
 		self.cur_epoch = cur_epoch
 		self.cur_iter = cur_iter
 		self.bestval_epoch = cur_epoch
 		self.train_loss = []
-		self.val_loss = []
+		self.val_loss = [1e100]
 		self.bestval = 1e10
 
 		self.config = config
 		self.model = model
 		self.optimizer = optimizer
 		self.train_dataloader = None
-		self.val_dataloader = val_dataloader
-		self.ss_dataloader = ss_dataloader
+		self.val_dataloader = None
+		self.ss_dataloader = None
 		self.writer = writer
 		# self.len_model_parameters = len(list(self.model.parameters()))
 
@@ -151,9 +151,9 @@ class Trainer(object):
 						v2 = v2s[i].item(),
 						v1 = v1s[i].item(),
 						scene=scenes[i],
-						target_point=target_points[i].cpu(),
+						target_point=tuple(target_points[i].cpu().numpy()),
 						waypoints=[],
-						nav_command=nav_commands[i].cpu(),
+						nav_command=nav_commands[i].cpu().numpy(),
 					)
 
 					data_dict[scenes[i]]['waypoints'].append((0.0,0.0))
@@ -163,7 +163,14 @@ class Trainer(object):
 					if self.config['predict_confidence']:
 						data_dict[scenes[i]]['confidence'] = pred_wp[i][len(pred_wp[0])-1][2].item()
 		
-		np.save(pseudo_data_path, list(data_dict.values()))
+		try:
+			existing_pseudo_data = list(np.load(pseudo_data_path, allow_pickle=True))
+		except:
+			existing_pseudo_data = []
+			print('No existing pseudo data found.')
+		
+		existing_pseudo_data.extend(list(data_dict.values()))
+		np.save(pseudo_data_path, existing_pseudo_data)
 
 
 
@@ -178,7 +185,7 @@ class Trainer(object):
 		# target point
 		# gt_velocity = data['velocity'].to(self.config['device'], dtype=torch.float32)
 		target_point = torch.stack(data['target_point'], dim=1).to(self.config['device'], dtype=torch.float32)
-		nav_command = data['nav_command'].to(self.config['device'])
+		nav_command = data['nav_command'].to(self.config['device'], dtype=torch.float32)
 		
 		v1 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)
 		v2 = data['v1'].reshape((-1,1)).to(self.config['device'], dtype=torch.float32)

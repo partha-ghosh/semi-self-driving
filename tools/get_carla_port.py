@@ -7,7 +7,7 @@ def get_free_port():
     """
 
     # get random in between 2000 and 3000 divisble by 5
-    port = random.randint(40000, 60000)
+    port = random.randint(4000, 6000)
     #port = 2000
     port_free = False
 

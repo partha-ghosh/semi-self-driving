@@ -1,7 +1,7 @@
 from run_utils import *
 
 root = os.path.dirname(os.path.abspath(__file__))
-exp_time = datetime.datetime.now().strftime("%m_%d_%H_%M_%S")
+exp_time = '09_08_14_15_40' #datetime.datetime.now().strftime("%m_%d_%H_%M_%S")
 
 def gen_config(
     training_type, #s,ss,ssf,ssgt
@@ -10,7 +10,8 @@ def gen_config(
     dataset=0, # 0 -> minimal, 1 -> transfuser+ 
     use_acc=0,
     use_nav=0,
-    imgaug=1, 
+    imgaug=1,
+    what_if=0,
     use_target_point=1,
     predict_confidence=0,
     confidence_threshold=0.33,
@@ -32,7 +33,7 @@ def gen_config(
     if kwargs.get('test_name', None):
         test_name = kwargs.get('test_name')
     else:
-        test_name = f'{exp_time}-{training_type}_d{dataset}_s{len(supervised_towns)}_ss{len(self_supervised_towns)}_acc{use_acc}_aug{imgaug}_nav{use_nav}_b{batch_size}'
+        test_name = f'd{dataset}_dl{dataloader}_imgaug{imgaug}_nav{use_nav}_tp{use_target_point}_pc{predict_confidence}_thresh{confidence_threshold}_whatif{what_if}_{training_type}_st{len(supervised_towns)}_sst{len(self_supervised_towns)}'
     
     root_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data'
     data_dir = f'{root_data_dir}/filtered_14_weathers_minimal_data' if dataset==0 else f'{root_data_dir}/filtered_transfuser_plus_data'
@@ -43,17 +44,20 @@ def gen_config(
 
     train_data, val_data, ssd_data = [], [], []
     for town in train_towns:
-        train_data.append(town+'_tiny')
-        train_data.append(town+'_short')
-        train_data.append(town+'_long')
+        # train_data.append(town+'_tiny')
+        # train_data.append(town+'_short')
+        # train_data.append(town+'_long')
+        train_data.append(town)
     
     for town in ssd_towns:
-        ssd_data.append(town+'_tiny')
-        ssd_data.append(town+'_short')
-        ssd_data.append(town+'_long')
+        # ssd_data.append(town+'_tiny')
+        # ssd_data.append(town+'_short')
+        # ssd_data.append(town+'_long')
+        ssd_data.append(town)
 
     for town in val_towns:
-        val_data.append(town+'_short')
+        # val_data.append(town+'_short')
+        val_data.append(town)
         
 
     config = dict(
@@ -73,6 +77,7 @@ def gen_config(
         use_target_point=use_target_point,
         predict_confidence=predict_confidence,
         confidence_threshold=confidence_threshold,
+        what_if=what_if,
         eval=eval,
         agent_name=agent,
         epochs=epochs,
@@ -120,188 +125,146 @@ tests = [
     [
         # gen_config(training_type='s',eval=2,epochs=2,test_name='test',val_every=1,)
         # gen_config(training_type='s',use_acc=2, eval=0,epochs=0,test_name='test',val_every=1,)
-        gen_config(training_type='s',eval=3)
+        # gen_config(training_type='s',eval=3,epochs=15, load_model=True)
         # gen_config(training_type='s',eval=3,use_acc=2,)
     ],
-    # AIM Baseline
+
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+#    [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+   [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+#    [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
+#    [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
+
+
+
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1,supervised_towns=[1,2,3,4])],
+
+
     # [
-    #     {
-    #         # "name": "aim-14_weathers_minimal_data-supervised",
-    #         "name": "aim-transfuser_plus_data_all_towns_noise_filtered_lr3-supervised",
-    #         "dir": f"{root}/ssd",
-    #         "sst": 0,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 50,
-    #         "batch_size": 64,
-    #         "eval": 3,
-    #         "copy_last_model": 0,
-    #         "load_model": 0,
-    #     },
-    #     *[
-    #         {
-    #             # "name": "aim-14_weathers_minimal_data-supervised",
-    #             "name": f"aim-transfuser_plus_data-self_supervised_{i}",
-    #             "dir": f"{root}/ssd",
-    #             "sst": 1,
-    #             "agent_name": "aim_agent",
-    #             "epochs": 5,
-    #             "batch_size": 64,
-    #             "eval": 0,
-    #             "copy_last_model": 1,
-    #             "load_model": 1,
-    #         } for i in range(19)],
-    #     {
-    #         # "name": "aim-14_weathers_minimal_data-supervised",
-    #         "name": "aim-transfuser_plus_data2-self_supervised",
-    #         "dir": f"{root}/ssd",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 50,
-    #         "batch_size": 64,
-    #         "eval": 3,
-    #         "copy_last_model": 1,
-    #         "load_model": 1,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
 
-    # AIM Noise
     # [
-    #     {
-    #         "name": "aim_noise:supervised_training",
-    #         "dir": f"{root}/ssd/aim_noise",
-    #         "sst": 0,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_noise:self_supervised_training_1",
-    #         "dir": f"{root}/ssd/aim_noise",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_noise:self_supervised_training_2",
-    #         "dir": f"{root}/ssd/aim_noise",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
 
-    # AIM No Noise
     # [
-    #     {
-    #         "name": "aim_no_noise:supervised_training",
-    #         "dir": f"{root}/ssd/aim_no_noise",
-    #         "sst": 0,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_no_noise:self_supervised_training_1",
-    #         "dir": f"{root}/ssd/aim_no_noise",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_no_noise:self_supervised_training_2",
-    #         "dir": f"{root}/ssd/aim_no_noise",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
 
-    # AIM Confidence
     # [
-    #     {
-    #         "name": "aim_confidenece:train_n_collect",
-    #         "dir": f"{root}/ssd/aim_confidence",
-    #         "sst": 0,
-    #         "agent_name": "aim_confidence_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_confidenece:self_supervised",
-    #         "dir": f"{root}/ssd/aim",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 100,
-    #         "batch_size": 64,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
 
-    # AIM Confidence from GT
+
+
+
     # [
-    #     {
-    #         "name": "aim_confidence_from_gt:train_n_collect",
-    #         "dir": f"{root}/ssd/aim_confidence_from_gt",
-    #         "sst": 0,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     },
-    #     {
-    #         "name": "aim_confidence_from_gt:self_supervised",
-    #         "dir": f"{root}/ssd/aim_confidence_from_gt",
-    #         "sst": 1,
-    #         "agent_name": "aim_agent",
-    #         "epochs": 100,
-    #         "batch_size": 64,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=3,epochs=100,val_every=5,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+
+
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
     
-    # AIM VO
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1)],
+    
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4])],
+
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4])],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4])],
+
+
     # [
-    #     {
-    #         "name": "aim_vo",
-    #         "dir": f"{root}/ssd/aim_vo",
-    #         "sst": '',
-    #         "agent_name": "aim_agent",
-    #         "epochs": 60,
-    #         "batch_size": 64,
-    #     }
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
     # ],
-    
-    # {
-    #     "name": "modified_aim_all_town_e50_b128",
-    #     "dir": f"{root}/ssd/aim",
-    #     "sst": 0,
-    #     "agent_name":"ssd_aim_agent",
-    #     "epochs": 50,
-    #     "batch_size": 128,
-    # },
-    # [{
-    #     "name": "dino_all_town_e50_b128",
-    #     "dir": f"{root}/aim_dino",
-    #     "sst": '',
-    #     "agent_name": "dino_aim_agent",
-    #     "epochs": 50,
-    #     "batch_size": 64,
-    # }],
-    
-    # [{
-    #     # "name": "aim-14_weathers_minimal_data_all_town-supervised",
-    #     "name": "aim-14_transfuser_plus_data_all_town-supervised",
-    #     # "name": "aim-14_pami_data_all_town-supervised",
-    #     "dir": f"{root}/aim",
-    #     "sst": '',
-    #     "agent_name": "aim_agent",
-    #     "epochs": 0,
-    #     "batch_size": 64,
-    #     "eval": 3,
-    #     "copy_last_model": 0,
-    #     "load_model": 0,
-    # }],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav0_tp1_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+
+
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=0,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc0_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,what_if=3,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=0,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
+    # [
+    #     gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=0,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],load_model=f'{root}/tmp/d1_dl1_imgaug1_nav1_tp0_pc1_thresh0.33_whatif0_s_st4_sst1/log/saved_model/model.pth'),
+    #     gen_config(training_type='ssf',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,what_if=3,eval=0,epochs=2,val_every=1,supervised_towns=[1,2,3,4],self_supervised_towns=[1,2,3,4,6,7,10],copy_last_model=1,load_model=1),
+    # ],
+
 ]
 
 # os.system('pkill -f carla')
@@ -312,7 +275,7 @@ def run_test(tests):
         test_name = test['test_name']
         test_dir = test['test_dir']
         script_dir = test['script_dir']
-        os.system(f'mkdir -p {test_dir} && cd {script_dir} && cp trainer.py data.py model.py train.py {test_dir}/')
+        os.system(f'mkdir -p {test_dir} && cd {script_dir} && cp trainer.py data.py model.py train.py utils.py {test_dir}/')
 
     test_id = id(tests)
     cmd_trains = []
@@ -335,7 +298,7 @@ def run_test(tests):
             'cmd': 
             [
                 # f'mkdir -p {test_dir} && rsync -a {script_dir}/* {test_dir}/ --exclude=log* --exclude=__pycache__',
-                f'rsync -a {old_test_dir}/log {test_dir}/ --exclude=*.err --exclude=*.out --exclude=*tfevents*' if test['copy_last_model'] else "",
+                f'rsync -av {old_test_dir}/log {test_dir}/ --exclude=*.err --exclude=*.out --exclude=*tfevents*' if test['copy_last_model'] else "",
                 f'cd {test_dir}',
                 f'CUDA_VISIBLE_DEVICES=0 python train.py "{str(test)}"',
                 f'''{f"cp -r {test['pseudo_data']} {test['logdir']}/" if test["training_type"]=="s" else "echo"}''',

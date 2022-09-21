@@ -50,7 +50,7 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 		exec(f'self.conf = {self.conf}')
 		self.config = Dict2Class(self.conf)
 		self.net = AIM(self.conf, 'cuda')
-		self.net.load_state_dict(torch.load(os.path.join(path_to_conf_file, 'best_model.pth')))
+		self.net.load_state_dict(torch.load(os.path.join(path_to_conf_file, 'model.pth')))
 		self.net.cuda()
 		self.net.eval()
 
@@ -234,7 +234,11 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 		v1 = torch.tensor([[self.v1]]).to('cuda', dtype=torch.float32)
 		v2 = torch.tensor([[self.v2]]).to('cuda', dtype=torch.float32)
 		
-		pred_wp = self.net(feature_emb=encoding, v1=v1, v2=v2, target_point=target_point, nav_command=command)
+		nav_command = np.zeros(6)
+		nav_command[int(command.item())-1] = 1
+		nav_command = torch.tensor(nav_command[:None]).to('cuda', dtype=torch.float32)
+
+		pred_wp = self.net(feature_emb=encoding, v1=v1, v2=v2, target_point=target_point, nav_command=nav_command)[:,:,:2]
 
 		self.v2 = self.v1
 		self.v1 = torch.norm(pred_wp[0][1]).cpu().item()
