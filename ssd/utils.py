@@ -137,19 +137,19 @@ def filter_data(path_to_npy, data):
         for i in range(window_size, len(steer_indicator)-window_size-1):
             steer_indicator[i] = (1 if (steer_indicator_copy[i-window_size:i+window_size+1]==1).any() else steer_indicator[i])
 
-        # plt.figure()
-        # plt.plot(speed_list,label='speed from wp')
-        # plt.plot(theta_list,label='theta from wp')
-        # plt.plot(stop_indicator*0.75, label='stop wp')
-        # plt.plot(long_stop_indicator*0.66, label='long stop wp')
-        # plt.plot(short_stop_indicator*1.25, label='short stop wp')
-        # # plt.plot(filtered_theta,label='filtered theta from wp')
-        # plt.plot(steer_indicator*0.5,label='steer indicator from wp')
-        # plt.plot(move_indicator, label='move wp')
-        # plt.title(f'{route[-50:]}')
-        # plt.legend()
-        # plt.savefig('x.png')
-        # input()
+        plt.figure()
+        plt.plot(speed_list,label='speed from wp')
+        plt.plot(theta_list,label='theta from wp')
+        plt.plot(stop_indicator*0.75, label='stop wp')
+        plt.plot(long_stop_indicator*0.66, label='long stop wp')
+        plt.plot(short_stop_indicator*1.25, label='short stop wp')
+        # plt.plot(filtered_theta,label='filtered theta from wp')
+        plt.plot(steer_indicator*0.5,label='steer indicator from wp')
+        plt.plot(move_indicator, label='move wp')
+        plt.title(f'{route[-50:]}')
+        plt.legend()
+        plt.savefig('x.png')
+        input()
 
         for i in range(len(move_indicator)):
             if move_indicator[i]:

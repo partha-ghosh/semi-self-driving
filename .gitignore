@@ -6,8 +6,9 @@ transfuser/
 results/
 saved_results/
 vis/**/
-test/
-test2/
+*.npy
+*.pth
+*slurm*
 *.out
 *.err
 log_test/

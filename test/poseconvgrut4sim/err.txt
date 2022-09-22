@@ -1,0 +1,2 @@
+main.py:124: RuntimeWarning: invalid value encountered in true_divide
+  unit_tm1_2_t0 = tm1_2_t0/np.linalg.norm(tm1_2_t0)

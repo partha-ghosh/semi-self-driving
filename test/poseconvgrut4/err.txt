@@ -1,0 +1,6 @@
+get_labels.py:128: RuntimeWarning: invalid value encountered in true_divide
+  unit_tm1_2_t0 = tm1_2_t0/np.linalg.norm(tm1_2_t0)
+Traceback (most recent call last):
+  File "get_labels.py", line 241, in <module>
+    scenes = scenes.to(device)
+AttributeError: 'NoneType' object has no attribute 'to'
