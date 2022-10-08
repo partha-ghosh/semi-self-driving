@@ -18,25 +18,28 @@ def gen_config(
     supervised_towns=[1,2,3,4,6,7,10],
     self_supervised_towns=[1],
     script_dir=f'{root}/ssd',
+    scene_type='rgb', #rgb or rgb2
     epochs=50,
     batch_size=64,
     agent='aim_agent',
     copy_last_model=0,
     load_model=0, # or path/to/pth, 1 -> load from test_dir
+    imgcnn=None,
     logdir='log',
     device='cuda',
     val_every=5,
     lr=2e-5,
+    test_id=None,
     **kwargs, # for test_name=test
     ):
 
     if kwargs.get('test_name', None):
         test_name = kwargs.get('test_name')
     else:
-        test_name = f'd{dataset}_dl{dataloader}_imgaug{imgaug}_nav{use_nav}_tp{use_target_point}_pc{predict_confidence}_thresh{confidence_threshold}_whatif{what_if}_{training_type}_st{len(supervised_towns)}_sst{len(self_supervised_towns)}'
+        test_name = f'd{dataset}_dl{dataloader}_imgaug{imgaug}_nav{use_nav}_tp{use_target_point}_pc{predict_confidence}_thresh{confidence_threshold}_whatif{what_if}_{training_type}_st{len(supervised_towns)}_sst{len(self_supervised_towns)}_cnn{imgcnn.split("/")[-2] if type(imgcnn)==str else ""}_lr{lr}'
     
     root_data_dir = '/mnt/qb/work/geiger/pghosh58/transfuser/data'
-    data_dir = f'{root_data_dir}/filtered_14_weathers_minimal_data' if dataset==0 else f'{root_data_dir}/filtered_transfuser_plus_data'
+    data_dir = f'{root_data_dir}/filtered_14_weathers_minimal_data' if dataset==0 else (f'{root_data_dir}/filtered_transfuser_plus_data' if dataset==1 else f'{root_data_dir}/filtered_new2')
 
     train_towns = [f'Town{str(i).zfill(2)}' for i in supervised_towns]
     ssd_towns = [f'Town{str(i).zfill(2)}' for i in self_supervised_towns]
@@ -44,24 +47,21 @@ def gen_config(
 
     train_data, val_data, ssd_data = [], [], []
     for town in train_towns:
-        # train_data.append(town+'_tiny')
-        # train_data.append(town+'_short')
-        # train_data.append(town+'_long')
-        train_data.append(town)
+        train_data.append(town+'_tiny')
+        train_data.append(town+'_short')
+        train_data.append(town+'_long')
     
     for town in ssd_towns:
-        # ssd_data.append(town+'_tiny')
-        # ssd_data.append(town+'_short')
-        # ssd_data.append(town+'_long')
-        ssd_data.append(town)
+        ssd_data.append(town+'_tiny')
+        ssd_data.append(town+'_short')
+        ssd_data.append(town+'_long')
 
     for town in val_towns:
-        # val_data.append(town+'_short')
-        val_data.append(town)
+        val_data.append(town+'_short')
         
 
     config = dict(
-        test_id=None,
+        test_id=test_id,
         test_name=test_name,
         test_dir=f'{root}/tmp/{test_name}',
         script_dir=script_dir,
@@ -71,6 +71,7 @@ def gen_config(
         validation_towns=val_data,
         training_type=training_type,
         dataloader=dataloader,
+        scene_type=scene_type,
         imgaug=imgaug,
         use_acc=use_acc,
         use_nav=use_nav,
@@ -84,6 +85,7 @@ def gen_config(
         batch_size=batch_size,
         copy_last_model=copy_last_model,
         load_model=load_model,
+        imgcnn=imgcnn,
         logdir=logdir,
         device=device,
         val_every=val_every,
@@ -129,20 +131,75 @@ tests = [
         # gen_config(training_type='s',eval=3,use_acc=2,)
     ],
 
-    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=1,val_every=5,load_model=0)],
     # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
     # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
     # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
-#    [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
-   [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+    
+    # [gen_config(training_type='s',dataset=2,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,scene_type='rgb2')],
+    # [gen_config(training_type='s',dataset=2,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,scene_type='rgb2')],
+    
+    # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet342/checkpoint.pth')],
+    # [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet342/checkpoint.pth')],
+
+    # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet342/checkpoint.pth')],
+    # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet342/checkpoint.pth')],
+
+    # [gen_config(training_type='s',dataset=2,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/new_save_resnet34/checkpoint.pth')],
+    # [gen_config(training_type='s',dataset=2,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/new_save_resnet34/checkpoint.pth')],
+
+
     # [gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
     # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0)],
+
 #    [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
 #    [gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
     # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
     # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
     # [gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=1,use_target_point=0,predict_confidence=1,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,supervised_towns=[1,2,3,4])],
 
+#    [
+#         gen_config(training_type='ssgt',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,test_id='deepvo',supervised_towns=[],lr=3e-4),
+#         gen_config(training_type='s',dataset=0,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],copy_last_model=1,load_model=1,lr=2e-5),
+#    ],
+
+   [
+        gen_config(training_type='ssgt',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,test_id='deepvo',supervised_towns=[],lr=3e-4),
+        gen_config(training_type='s',dataset=1,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],copy_last_model=1,load_model=1,lr=2e-5),
+   ],
+
+#    [
+#         gen_config(training_type='ssgt',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,test_id='deepvo',supervised_towns=[],lr=3e-4),
+#         gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],copy_last_model=1,load_model=1,lr=2e-5),
+#    ],
+
+   [
+        gen_config(training_type='ssgt',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,test_id='deepvo',supervised_towns=[],lr=3e-4),
+        gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],copy_last_model=1,load_model=1,lr=2e-5),
+   ],
+
+#    [
+#         gen_config(training_type='ssgt',dataset=2,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,load_model=0,test_id='deepvo',supervised_towns=[]),
+#         gen_config(training_type='s',dataset=2,dataloader=0,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],copy_last_model=1,load_model=1),
+#    ],
+   
+   #gdfgdfg
+#    [
+#         gen_config(training_type='ssgt',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,test_id='deepvo',supervised_towns=[],imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet34/checkpoint.pth',lr=3e-4),
+#         gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],batch_size=48,copy_last_model=1,load_model=1,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet34/checkpoint.pth'),
+#    ],
+
+#    [
+#         gen_config(training_type='ssgt',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,test_id='deepvo',supervised_towns=[],imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet34/checkpoint.pth',lr=3e-4),
+#         gen_config(training_type='s',dataset=1,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],batch_size=48,copy_last_model=1,load_model=1,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/tp_save_resnet34/checkpoint.pth'),
+#    ],
+
+#    [
+#         gen_config(training_type='ssgt',dataset=2,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,batch_size=48,load_model=0,test_id='deepvo',supervised_towns=[],imgcnn='/mnt/qb/work/geiger/pghosh58/dino/new_save_resnet34/checkpoint.pth'),
+#         gen_config(training_type='s',dataset=2,dataloader=1,imgaug=1,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=50,val_every=5,supervised_towns=[1,2,3,4],batch_size=48,copy_last_model=1,load_model=1,imgcnn='/mnt/qb/work/geiger/pghosh58/dino/new_save_resnet34/checkpoint.pth'),
+#    ],
 
 
     # [gen_config(training_type='s',dataset=0,dataloader=0,imgaug=0,use_nav=0,use_target_point=1,predict_confidence=0,confidence_threshold=0.33,eval=3,epochs=0,val_every=5,load_model=1)],
@@ -287,9 +344,10 @@ def run_test(tests):
         test_dir = test['test_dir']
         script_dir = test['script_dir']
 
-        os.system(f'mkdir -p {test["data_dir"]}/pseudo/{test_id}')
-        test['pseudo_data'] = f'{test["data_dir"]}/pseudo/{test_id}/processed_data.npy'
-        test['test_id'] = test_id
+        if test['test_id'] is None:
+            os.system(f'mkdir -p {test["data_dir"]}/pseudo/{test_id}')
+            test['pseudo_data'] = f'{test["data_dir"]}/pseudo/{test_id}/processed_data.npy'
+            test['test_id'] = test_id
 
         cmd_trains.append({
             'test_name':test_name,

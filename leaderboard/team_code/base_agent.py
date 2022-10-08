@@ -12,6 +12,7 @@ from team_code.planner import RoutePlanner
 
 import numpy as np
 from PIL import Image, ImageDraw
+from wand.image import Image as WandImage
 
 
 SAVE_PATH = os.environ.get('SAVE_PATH', None)
@@ -26,9 +27,9 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
         self.initialized = False
 
         self._sensor_data = {
-            'width': 400,
-            'height': 300,
-            'fov': 100
+            'width': 960,
+            'height': 480,
+            'fov': 120
         }
 
         self._3d_bb_distance = 50
@@ -232,6 +233,16 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
 
         
         rgb_front = cv2.cvtColor(input_data['rgb_front'][1][:, :, :3], cv2.COLOR_BGR2RGB)
+        img = WandImage.from_array(rgb_front)
+        img.virtual_pixel = 'transparent'
+        img.distort('barrel', (0.0, 0, 0, 1.85))
+        img2 = np.array(img)
+        center = img2.shape
+        w = 400
+        h = 300
+        x = center[1]/2 - w/2
+        y = center[0]/2 - h/2
+        rgb_front = img2[int(y):int(y+h), int(x):int(x+w)][:, :, :3]
         rgb_rear = cv2.cvtColor(input_data['rgb_rear'][1][:, :, :3], cv2.COLOR_BGR2RGB)
         rgb_left = cv2.cvtColor(input_data['rgb_left'][1][:, :, :3], cv2.COLOR_BGR2RGB)
         rgb_right = cv2.cvtColor(input_data['rgb_right'][1][:, :, :3], cv2.COLOR_BGR2RGB)
@@ -316,21 +327,21 @@ class BaseAgent(autonomous_agent.AutonomousAgent):
         json.dump(data, f, indent=4)
         f.close()
 
-        for pos in ['front', 'left', 'right', 'rear']:
+        for pos in ['front']:#, 'left', 'right', 'rear']:
             name = 'rgb_' + pos
             Image.fromarray(tick_data[name]).save(self.save_path / name / ('%04d.png' % frame))
-            for sensor_type in ['seg', 'depth']:
-                name = sensor_type + '_' + pos
-                Image.fromarray(tick_data[name]).save(self.save_path / name / ('%04d.png' % frame))
-            for sensor_type in ['2d_bbs']:
-                name = sensor_type + '_' + pos
-                np.save(self.save_path / name / ('%04d.npy' % frame), tick_data[name], allow_pickle=True)
+        #     for sensor_type in ['seg', 'depth']:
+        #         name = sensor_type + '_' + pos
+        #         Image.fromarray(tick_data[name]).save(self.save_path / name / ('%04d.png' % frame))
+        #     for sensor_type in ['2d_bbs']:
+        #         name = sensor_type + '_' + pos
+        #         np.save(self.save_path / name / ('%04d.npy' % frame), tick_data[name], allow_pickle=True)
 
-        Image.fromarray(tick_data['topdown']).save(self.save_path / 'topdown' / ('%04d.png' % frame))
-        np.save(self.save_path / 'lidar' / ('%04d.npy' % frame), tick_data['lidar'], allow_pickle=True)
-        np.save(self.save_path / 'semantic_lidar' / ('%04d.npy' % frame), tick_data['semantic_lidar'], allow_pickle=True)
-        np.save(self.save_path / '3d_bbs' / ('%04d.npy' % frame), tick_data['3d_bbs'], allow_pickle=True)
-        np.save(self.save_path / 'affordances' / ('%04d.npy' % frame), tick_data['affordances'], allow_pickle=True)
+        # Image.fromarray(tick_data['topdown']).save(self.save_path / 'topdown' / ('%04d.png' % frame))
+        # np.save(self.save_path / 'lidar' / ('%04d.npy' % frame), tick_data['lidar'], allow_pickle=True)
+        # np.save(self.save_path / 'semantic_lidar' / ('%04d.npy' % frame), tick_data['semantic_lidar'], allow_pickle=True)
+        # np.save(self.save_path / '3d_bbs' / ('%04d.npy' % frame), tick_data['3d_bbs'], allow_pickle=True)
+        # np.save(self.save_path / 'affordances' / ('%04d.npy' % frame), tick_data['affordances'], allow_pickle=True)
         
 
     def _weather_to_dict(self, carla_weather):

@@ -1,0 +1,52 @@
+JobId=1894630 JobName=CILRS
+   UserId=pghosh58(4488) GroupId=geiger(4009) MCS_label=N/A
+   Priority=6977 Nice=0 Account=geiger QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=2-00:00:00 TimeMin=N/A
+   SubmitTime=2022-10-03T02:24:34 EligibleTime=2022-10-03T02:24:34
+   AccrueTime=2022-10-03T02:24:37
+   StartTime=2022-10-03T02:45:36 EndTime=2022-10-05T02:45:36 Deadline=N/A
+   PreemptEligibleTime=2022-10-03T02:46:36 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2022-10-03T02:45:36
+   Partition=gpu-2080ti AllocNode:Sid=bg-slurmb-1:1587945
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=slurm-bm-21
+   BatchHost=slurm-bm-21
+   NumNodes=1 NumCPUs=8 NumTasks=1 CPUs/Task=8 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=8,mem=32G,node=1,billing=2,gres/gpu=1,gres/gpu:rtx2080ti=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=8 MinMemoryNode=32G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo/run.sh
+   WorkDir=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo
+   StdErr=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo/1894630.err
+   StdIn=/dev/null
+   StdOut=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo/1894630.out
+   Power=
+   TresPerNode=gpu:rtx2080ti:1
+   NtasksPerTRES:0
+
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town01_long/processed_data.npy [True, False, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town01_short/processed_data.npy [True, False, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town01_tiny/processed_data.npy [True, False, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town02_long/processed_data.npy [False, True, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town02_short/processed_data.npy [False, True, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town02_tiny/processed_data.npy [False, True, False, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town03_long/processed_data.npy [False, False, True, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town03_short/processed_data.npy [False, False, True, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town03_tiny/processed_data.npy [False, False, True, False, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town04_long/processed_data.npy [False, False, False, True, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town04_short/processed_data.npy [False, False, False, True, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town04_tiny/processed_data.npy [False, False, False, True, False, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town06_long/processed_data.npy [False, False, False, False, True, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town06_short/processed_data.npy [False, False, False, False, True, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town06_tiny/processed_data.npy [False, False, False, False, True, False, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_long/processed_data.npy [False, False, False, False, False, True, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_short/processed_data.npy [False, False, False, False, False, True, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_tiny/processed_data.npy [False, False, False, False, False, True, False]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town10_long/processed_data.npy [False, False, False, False, False, False, True]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town10_short/processed_data.npy [False, False, False, False, False, False, True]
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town10_tiny/processed_data.npy [False, False, False, False, False, False, True]
+model loaded

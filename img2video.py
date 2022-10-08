@@ -16,7 +16,8 @@ def getAllFilesRecursive(root):
                 files.append(join(root,f))
     return files
 
-files = getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data')
+files = getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/new')
+# files = getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data')
 # files = getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data')
 # files = getAllFilesRecursive('/mnt/qb/geiger/kchitta31/datasets/carla/pami_v1_dataset_23_11')
 

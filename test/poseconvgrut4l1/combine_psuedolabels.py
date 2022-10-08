@@ -1,5 +1,6 @@
 import numpy as np
 
+
 i=10000
 a = np.load('psuedo_waypoints0.npy', allow_pickle=True).item()
 while i < 150000:

@@ -20,6 +20,11 @@ from torch.utils.tensorboard import SummaryWriter
 torch.backends.cudnn.benchmark = True
 from imgaug import augmenters as iaa, imgaug
 import imageio
+from pprint import pprint
+config = dict()
+exec(f'config = {sys.argv[1]}')
+pprint(config)
+#keys: dataset
 
 # device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -28,7 +33,8 @@ writer = SummaryWriter()
 # hyper parameters
 num_epochs = 10
 batch_size = 6
-learning_rate = 3e-5
+learning_rate = 2e-5
+
 
 # dataset has PILImage images of range [0, 1].
 # we transform them to Tensors of normalized range [-1, 1]
@@ -47,6 +53,10 @@ def scale_and_crop_image(image, scale=1, crop=256):
     # cropped_image = np.transpose(cropped_image, (2,0,1))
     return cropped_image
 
+def pami_scale_and_crop_image(image, scale=1, crop=None):
+    cropped_image = image[320:320+320, 0:160]
+    return cropped_image
+
 def normalize_imagenet(x):
     """ Normalize input images according to ImageNet standards.
     Args:
@@ -58,47 +68,20 @@ def normalize_imagenet(x):
     x[:, 2] = (x[:, 2] - 0.406) / 0.225
     return x
 
-imgaug=None
-# imgaug = iaa.Sequential([
-#     	iaa.SomeOf((0,1),
-#     	[
-# 			iaa.AdditiveGaussianNoise(scale=0.2*255, per_channel=True),
-# 		    iaa.Dropout(p=(0, 0.2)),
-# 			iaa.SaltAndPepper(0.1),
-# 		], random_order=True),
-#     ])
 
 class MyDataset(Dataset):
 
-    def __init__(self, mode, imgaug):
+    def __init__(self, datset_path, mode):
         # data loading
-        if mode == 'train':
-            if os.path.exists('/mnt/qb/work/geiger/pghosh58/transfuser/data/train_driving_scenes2.npy'):
-                self.driving_scenes = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/data/train_driving_scenes2.npy',allow_pickle='TRUE')
-            else:
-                driving_scenes = self.getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data')
-                self.driving_scenes = [x for x in driving_scenes if ('.png' in x and ('Town01' in x or 'Town02' in x or 'Town03' in x or 'Town04' in x))]
-                np.save('/mnt/qb/work/geiger/pghosh58/transfuser/data/train_driving_scenes2.npy', self.driving_scenes)
-        if mode == 'test':
-            if os.path.exists('/mnt/qb/work/geiger/pghosh58/transfuser/data/test_driving_scenes.npy'):
-                self.driving_scenes = np.load('/mnt/qb/work/geiger/pghosh58/transfuser/data/test_driving_scenes.npy',allow_pickle='TRUE')
-            else:
-                driving_scenes = self.getAllFilesRecursive('/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data')
-                self.driving_scenes = [x for x in driving_scenes if ('.png' in x and 'Town05' in x)]
-                np.save('/mnt/qb/work/geiger/pghosh58/transfuser/data/test_driving_scenes.npy', self.driving_scenes)
-        
-        self.driving_scenes_dict = {k:True for k in self.driving_scenes}
-        self.imgaug = imgaug
+        towns = ['Town01', 'Town02', 'Town03', 'Town04'] if mode=='train' else ['Town05']
+        self.driving_scenes = []
+        for town in towns:
+            town_data = np.load(f'{datset_path}/{town}/processed_data.npy')
+            self.driving_scenes.extend(town_data)
 
-    def getAllFilesRecursive(self, root):
-        files = [ join(root,f) for f in listdir(root) if isfile(join(root,f))]
-        dirs = [ d for d in listdir(root) if isdir(join(root,d))]
-        for d in dirs:
-            files_in_d = self.getAllFilesRecursive(join(root,d))
-            if files_in_d:
-                for f in files_in_d:
-                    files.append(join(root,f))
-        return files
+        self.image_dir = 'rgb' if ('pami' in self.driving_scenes[0]['scene']) else 'rgb_front'
+        self.scale_and_crop_image = pami_scale_and_crop_image if ('pami' in self.driving_scenes[0]['scene']) else scale_and_crop_image
+        self.driving_scenes_dict = {k['scene']:True for k in self.driving_scenes}
 
     def __getitem__(self, index):
         n = np.random.randint(0, len(self.driving_scenes))
@@ -107,7 +90,7 @@ class MyDataset(Dataset):
         # n_seqs = 2*max(batch_size_choices)//batch_size        
         n_seqs = 24
 
-        scene_names = [self.driving_scenes[n]]
+        scene_names = [self.driving_scenes[n]['scene']]
         t = int(scene_names[0][-8:-4])
         for i in range(1, n_seqs+10):
             scene_names.append(scene_names[0].replace(str(t).zfill(4), str(t+i).zfill(4)))
@@ -120,7 +103,7 @@ class MyDataset(Dataset):
             abs_pos = []
             rel_translations = []
             for scene_name in scene_names:
-                with open(scene_name.replace('.png', '.json').replace('rgb_front', 'measurements'), 'r') as f:
+                with open(scene_name.replace('.png', '.json').replace(self.image_dir, 'measurements'), 'r') as f:
                     measurements.append(json.load(f))
 
             for measurement in measurements:
@@ -170,7 +153,7 @@ class MyDataset(Dataset):
 
             scenes = []
             for scene_name in scene_names[1:]:
-                scenes.append(torch.from_numpy(np.array(scale_and_crop_image(Image.open(scene_name), scale=1, crop=256))))
+                scenes.append(torch.from_numpy(np.array(self.scale_and_crop_image(Image.open(scene_name), scale=1, crop=256))))
 
             # for i in range(len(scenes)):
             #     imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{i}scenet.jpg', scenes[i])  #write all changed images
@@ -249,21 +232,21 @@ class RelNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoding = nn.Sequential(
-            nn.Conv2d(6, 64, 3, padding=1), #256
+            nn.Conv2d(6, 64, 3, padding=1), #256 | 320,160
             nn.ReLU(),
             nn.MaxPool2d(2,2),
-            nn.Conv2d(64, 128, 3, padding=1), #128
+            nn.Conv2d(64, 128, 3, padding=1), #128 | 160,80
             nn.ReLU(),
             nn.MaxPool2d(2,2),
-            nn.Conv2d(128, 256, 3, padding=1), #64
+            nn.Conv2d(128, 256, 3, padding=1), #64 | 80,40
             nn.ReLU(),
-            nn.MaxPool2d(4,4),
-            nn.Conv2d(256, 512, 3, padding=1), #16
+            nn.MaxPool2d(4,2) if 'pami' in config['dataset'] else nn.MaxPool2d(4,4),
+            nn.Conv2d(256, 512, 3, padding=1), #16 | 20, 20 (4,2)
             nn.ReLU(),
-            nn.MaxPool2d(4,4),
-            nn.Conv2d(512, 1024, 3, padding=1), #4
+            nn.MaxPool2d(5,5) if 'pami' in config['dataset'] else nn.MaxPool2d(4,4),
+            nn.Conv2d(512, 1024, 3, padding=1), #4 | 4 (5,5)
             nn.ReLU(),
-            nn.MaxPool2d(4,4),
+            nn.MaxPool2d(4,4),                  #1
         )
         self.fc1 = nn.Linear(1024,256)
 

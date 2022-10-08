@@ -17,7 +17,9 @@ from ssd.model import AIM
 from aim.config import GlobalConfig
 from aim.data import scale_and_crop_image
 from team_code.planner import RoutePlanner
-
+from wand.image import Image as WandImage
+import matplotlib.pyplot as plt
+import time
 
 SAVE_PATH = os.environ.get('SAVE_PATH', None)
 
@@ -35,7 +37,7 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
         self.wall_start = time.time()
         self.initialized = False
 
-        self.input_buffer = {'rgb': deque(), 'rgb_left': deque(), 'rgb_right': deque(), 
+        self.input_buffer = {'rgb': deque(), 'rgb2': deque(), 'rgb_left': deque(), 'rgb_right': deque(), 
                             'rgb_rear': deque(), 'gps': deque(), 'thetas': deque()}
 
 
@@ -89,8 +91,15 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
                     'type': 'sensor.camera.rgb',
                     'x': 1.3, 'y': 0.0, 'z':2.3,
                     'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
-                    'width': 960, 'height': 480, 'fov': 120,
+                    'width': 400, 'height': 300, 'fov': 100,
                     'id': 'rgb'
+                    },
+                {
+                    'type': 'sensor.camera.rgb',
+                    'x': 1.3, 'y': 0.0, 'z':2.3,
+                    'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0,
+                    'width': 960, 'height': 480, 'fov': 120,
+                    'id': 'rgb2'
                     },
                 {
                     'type': 'sensor.camera.rgb',
@@ -138,7 +147,19 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
         self.step += 1
 
         rgb = cv2.cvtColor(input_data['rgb'][1][:, :, :3], cv2.COLOR_BGR2RGB)
-        rgb = self.scale_crop(rgb, 1, 320, 320, 160, 160)
+        
+        rgb2 = cv2.cvtColor(input_data['rgb2'][1][:, :, :3], cv2.COLOR_BGR2RGB)
+        img = WandImage.from_array(rgb2)
+        img.virtual_pixel = 'transparent'
+        img.distort('barrel', (0.0, 0, 0, 1.85))
+        img2 = np.array(img)
+        center = img2.shape
+        w = 400
+        h = 300
+        x = center[1]/2 - w/2
+        y = center[0]/2 - h/2
+        rgb2 = img2[int(y):int(y+h), int(x):int(x+w)][:, :, :3]
+        
         rgb_left = cv2.cvtColor(input_data['rgb_left'][1][:, :, :3], cv2.COLOR_BGR2RGB)
         rgb_right = cv2.cvtColor(input_data['rgb_right'][1][:, :, :3], cv2.COLOR_BGR2RGB)
         rgb_rear = cv2.cvtColor(input_data['rgb_rear'][1][:, :, :3], cv2.COLOR_BGR2RGB)
@@ -148,6 +169,7 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 
         result = {
                 'rgb': rgb,
+                'rgb2': rgb2,
                 'rgb_left': rgb_left,
                 'rgb_right': rgb_right,
                 'rgb_rear': rgb_rear,
@@ -173,19 +195,6 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
 
         return result
 
-    def scale_crop(self, image, scale=1, start_x=0, crop_x=None, start_y=0, crop_y=None):
-        (width, height) = (image.width // scale, image.height // scale)
-        if scale != 1:
-            image = image.resize((width, height))
-        if crop_x is None:
-            crop_x = width
-        if crop_y is None:
-            crop_y = height
-            
-        image = np.asarray(image)
-        cropped_image = image[start_y:start_y+crop_y, start_x:start_x+crop_x]
-        return cropped_image  
-
 
     @torch.no_grad()
     def run_step(self, input_data, timestamp):
@@ -198,6 +207,9 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
             rgb = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data['rgb']), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
             self.input_buffer['rgb'].append(rgb.to('cuda', dtype=torch.float32))
             
+            rgb2 = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data['rgb2']), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
+            self.input_buffer['rgb2'].append(rgb2.to('cuda', dtype=torch.float32))
+
             if not self.config.ignore_sides:
                 rgb_left = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data['rgb_left']), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
                 self.input_buffer['rgb_left'].append(rgb_left.to('cuda', dtype=torch.float32))
@@ -224,10 +236,11 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
         target_point = torch.stack(tick_data['target_point'], dim=1).to('cuda', dtype=torch.float32)
 
         encoding = []
-        rgb = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data['rgb']), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
-        self.input_buffer['rgb'].popleft()
-        self.input_buffer['rgb'].append(rgb.to('cuda', dtype=torch.float32))
-        encoding.append(self.net.image_encoder(list(self.input_buffer['rgb'])))
+        scene_type = self.config.scene_type # rgb or rgb2
+        rgb = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data[scene_type]), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
+        self.input_buffer[scene_type].popleft()
+        self.input_buffer[scene_type].append(rgb.to('cuda', dtype=torch.float32))
+        encoding.append(self.net.image_encoder(list(self.input_buffer[scene_type])))
         
         if not self.config.ignore_sides:
             rgb_left = torch.from_numpy(scale_and_crop_image(Image.fromarray(tick_data['rgb_left']), scale=self.config.scale, crop=self.config.input_resolution)).unsqueeze(0)
@@ -277,7 +290,7 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
     def save(self, tick_data):
         frame = self.step // 10
 
-        Image.fromarray(tick_data['rgb']).save(self.save_path / 'rgb' / ('%04d.png' % frame))
+        Image.fromarray(tick_data[self.config.scene_type]).save(self.save_path / self.config.scene_type / ('%04d.png' % frame))
 
         outfile = open(self.save_path / 'meta' / ('%04d.json' % frame), 'w')
         json.dump(self.pid_metadata, outfile, indent=4)

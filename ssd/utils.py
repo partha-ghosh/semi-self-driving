@@ -32,15 +32,12 @@ def get_scenes(town_path):
         if '.png' in f:
             if 'rgb_front' in f:
                 scenes.append(f)
-            elif ('rgb' in f) and ('pami' in f):
-                scenes.append(f)
 
     return scenes
 
 def get_measurements(scene):
-    img_dir = 'rgb' if ('pami' in scene) else 'rgb_front'
 
-    with open(scene.replace('png','json').replace(img_dir,'measurements'), 'r') as f:
+    with open(scene.replace('png','json').replace('rgb_front','measurements'), 'r') as f:
         data = json.load(f)
     return data
 
@@ -137,19 +134,19 @@ def filter_data(path_to_npy, data):
         for i in range(window_size, len(steer_indicator)-window_size-1):
             steer_indicator[i] = (1 if (steer_indicator_copy[i-window_size:i+window_size+1]==1).any() else steer_indicator[i])
 
-        plt.figure()
-        plt.plot(speed_list,label='speed from wp')
-        plt.plot(theta_list,label='theta from wp')
-        plt.plot(stop_indicator*0.75, label='stop wp')
-        plt.plot(long_stop_indicator*0.66, label='long stop wp')
-        plt.plot(short_stop_indicator*1.25, label='short stop wp')
-        # plt.plot(filtered_theta,label='filtered theta from wp')
-        plt.plot(steer_indicator*0.5,label='steer indicator from wp')
-        plt.plot(move_indicator, label='move wp')
-        plt.title(f'{route[-50:]}')
-        plt.legend()
-        plt.savefig('x.png')
-        input()
+        # plt.figure()
+        # plt.plot(speed_list,label='speed from wp')
+        # plt.plot(theta_list,label='theta from wp')
+        # plt.plot(stop_indicator*0.75, label='stop wp')
+        # plt.plot(long_stop_indicator*0.66, label='long stop wp')
+        # plt.plot(short_stop_indicator*1.25, label='short stop wp')
+        # # plt.plot(filtered_theta,label='filtered theta from wp')
+        # plt.plot(steer_indicator*0.5,label='steer indicator from wp')
+        # plt.plot(move_indicator, label='move wp')
+        # plt.title(f'{route[-50:]}')
+        # plt.legend()
+        # plt.savefig('x.png')
+        # input()
 
         for i in range(len(move_indicator)):
             if move_indicator[i]:
@@ -164,11 +161,10 @@ def filter_data(path_to_npy, data):
         # input()
 
 
-def worker(town, routes, seq_len, pred_len, dest_path):
+def worker(town, routes, data_path, seq_len, pred_len, dest_path):
     data = dict()
     for route in tqdm.tqdm(routes, desc='route', leave=False):
-        # scenes = get_scenes(f'{data_path}/{town}/{route}')
-        scenes = get_scenes(route)
+        scenes = get_scenes(f'{data_path}/{town}/{route}')
         
         for scene in tqdm.tqdm(scenes, desc='scene', leave=False):
             try:
@@ -217,5 +213,4 @@ def worker(town, routes, seq_len, pred_len, dest_path):
             # input()
     os.system(f'mkdir -p {dest_path}/{town}')
     np.save(f'{dest_path}/{town}/processed_data.npy', list(data.values()))
-
 

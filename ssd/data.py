@@ -56,6 +56,7 @@ class CARLA_Data(Dataset):
             img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
             
             example = deepcopy(item)
+            example['waypoints'] = [tuple(wp) for wp in item['waypoints']]
             example['fronts'] = []
             if self.imgaug is None:
                 example['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
@@ -63,7 +64,6 @@ class CARLA_Data(Dataset):
                 aug_img = self.imgaug.augment_image(img)
                 # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.jpg', aug_img)  #write all changed images
                 example['fronts'].append(torch.from_numpy(aug_img.transpose(2,0,1)))
-
             return example
             
         except:
@@ -83,13 +83,13 @@ class CARLA_Data2(Dataset):
         self.data = []
 
         for town in towns:
-            town_data = np.load(f'{self.config["data_dir"]}/{town}/processed_data.npy', allow_pickle=True)
+            town_data = list(np.load(f'{self.config["data_dir"]}/{town}/processed_data.npy', allow_pickle=True))
             self.data.extend(town_data)
         
         if use_pseudo_data:
             try:
                 print("Importing pseudo data")
-                ssd_data = np.load(f'{self.config["data_dir"]}/pseudo/{self.config["test_id"]}/processed_data.npy', allow_pickle=True).item()
+                ssd_data = list(np.load(f'{self.config["data_dir"]}/pseudo/{self.config["test_id"]}/processed_data.npy', allow_pickle=True))
                 self.data.extend(ssd_data)
             except:
                 print('There is no pseudolabeled data')
@@ -107,6 +107,7 @@ class CARLA_Data2(Dataset):
         img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
         
         example = deepcopy(item)
+        example['waypoints'] = [tuple(wp) for wp in item['waypoints']]
         example['fronts'] = []
         if self.imgaug is None:
             example['fronts'].append(torch.from_numpy(img.transpose(2,0,1)))
@@ -352,15 +353,14 @@ def scale_and_crop_image(image, scale=1, crop=256):
     """
     Scale and crop a PIL image, returning a channels-first numpy array.
     """
-    # (width, height) = (int(image.width // scale), int(image.height // scale))
-    # im_resized = image.resize((width, height))
-    # image = np.asarray(im_resized)
-    # start_x = height//2 - crop//2
-    # start_y = width//2 - crop//2
-    # cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
+    (width, height) = (int(image.width // scale), int(image.height // scale))
+    im_resized = image.resize((width, height))
+    image = np.asarray(im_resized)
+    start_x = height//2 - crop//2
+    start_y = width//2 - crop//2
+    cropped_image = image[start_x:start_x+crop, start_y:start_y+crop]
     
     # cropped_image = np.transpose(cropped_image, (2,0,1))
-    cropped_image = image
     return cropped_image
 
 

@@ -197,7 +197,6 @@ class Trainer(object):
 		
 		gt_waypoints = [torch.stack(data['waypoints'][i], dim=1).to(self.config['device'], dtype=torch.float32) for i in range(self.config['seq_len'], len(data['waypoints']))]
 		gt_waypoints = torch.stack(gt_waypoints, dim=1).to(self.config['device'], dtype=torch.float32)
-		
 
 		# if not torch.isfinite(target_point).all(): print('target_point', target_point)
 		# if not torch.isfinite(command).all(): print('command', command)
