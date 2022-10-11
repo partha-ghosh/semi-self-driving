@@ -6,12 +6,12 @@
 #SBATCH --time=2-00:00            # Runtime in D-HH:MM
 #SBATCH --gres=gpu:rtx2080ti:1    # optionally type and number of gpus
 #SBATCH --mem=32G                # Memory pool for all cores (see also --mem-per-cpu)
-#SBATCH --output=/mnt/qb/work/geiger/pghosh58/transfuser/%j.out  # File to which STDOUT will be written
-#SBATCH --error=/mnt/qb/work/geiger/pghosh58/transfuser/%j.err   # File to which STDERR will be written
+#SBATCH --output=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans/%j.out  # File to which STDOUT will be written
+#SBATCH --error=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans/%j.err   # File to which STDERR will be written
 #SBATCH --partition=gpu-2080ti        # gpu-2080ti-preemptable
 
 scontrol show job $SLURM_JOB_ID 
-cd /mnt/qb/work/geiger/pghosh58/transfuser
-CUDA_VISIBLE_DEVICES=0 python img2video.py
+cd /mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans
+CUDA_VISIBLE_DEVICES=0 python get_labels.py
 mv $SLURM_JOB_ID.out out.txt
 mv $SLURM_JOB_ID.err err.txt

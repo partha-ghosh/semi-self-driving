@@ -1,0 +1,134 @@
+JobId=1905092 JobName=CILRS
+   UserId=pghosh58(4488) GroupId=geiger(4009) MCS_label=N/A
+   Priority=5239 Nice=0 Account=geiger QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:01 TimeLimit=2-00:00:00 TimeMin=N/A
+   SubmitTime=2022-10-08T22:38:52 EligibleTime=2022-10-08T22:38:52
+   AccrueTime=2022-10-08T22:38:52
+   StartTime=2022-10-08T22:38:52 EndTime=2022-10-10T22:38:52 Deadline=N/A
+   PreemptEligibleTime=2022-10-08T22:39:52 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2022-10-08T22:38:52
+   Partition=gpu-2080ti AllocNode:Sid=bg-slurmb-1:922434
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=slurm-bm-51
+   BatchHost=slurm-bm-51
+   NumNodes=1 NumCPUs=8 NumTasks=1 CPUs/Task=8 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=8,mem=32G,node=1,billing=2,gres/gpu=1,gres/gpu:rtx2080ti=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=8 MinMemoryNode=32G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans/run.sh
+   WorkDir=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans
+   StdErr=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans/1905092.err
+   StdIn=/dev/null
+   StdOut=/mnt/qb/work/geiger/pghosh58/transfuser/deepvo_trans/1905092.out
+   Power=
+   TresPerNode=gpu:rtx2080ti:1
+   NtasksPerTRES:0
+
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_long/processed_data.npy
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_short/processed_data.npy
+/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data/Town07_tiny/processed_data.npy
+model loaded
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0159.png']
+[(-39.72711020576169, -99.39362348752246), (-37.573988494286546, -99.34476484487774)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0160.png']
+[(-37.573988494286546, -99.34476484487774), (-34.90742308259634, -99.34145368764668)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0161.png']
+[(-34.90742308259634, -99.34145368764668), (-31.758098900476792, -99.38270582393336)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0162.png']
+[(-31.758098900476792, -99.38270582393336), (-28.228706590821943, -99.44412244999363)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0163.png']
+[(-28.228706590821943, -99.44412244999363), (-24.829756221716796, -99.44720472538846)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0164.png']
+[(-24.829756221716796, -99.44720472538846), (-21.33503347327231, -99.40851606566775)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0165.png']
+[(-21.33503347327231, -99.40851606566775), (-18.01218218236629, -99.35023512076411)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0166.png']
+[(-18.01218218236629, -99.35023512076411), (-15.448804304798323, -99.32043470568443)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0167.png']
+[(-15.448804304798323, -99.32043470568443), (-12.6198340466367, -99.30664076035313)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0168.png']
+[(-12.6198340466367, -99.30664076035313), (-9.39694386261246, -99.29732526961777)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0169.png']
+[(-9.39694386261246, -99.29732526961777), (-5.869528610108143, -99.3128816050882)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0170.png']
+[(-5.869528610108143, -99.3128816050882), (-2.4286830713097256, -99.29054273787025)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0171.png']
+[(-2.4286830713097256, -99.29054273787025), (0.902633899068443, -99.26474775492493)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0172.png']
+[(0.902633899068443, -99.26474775492493), (4.401445951564019, -99.23760236914575)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0173.png']
+[(4.401445951564019, -99.23760236914575), (6.717025442244519, -99.21270002536181)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0174.png']
+[(6.717025442244519, -99.21270002536181), (6.879982015845507, -99.21168531588778)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0175.png']
+[(6.879982015845507, -99.21168531588778), (7.59006380006603, -99.20812238863681)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0176.png']
+[(7.59006380006603, -99.20812238863681), (9.064029467111515, -99.2057191293562)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0177.png']
+[(9.064029467111515, -99.2057191293562), (11.109447790443053, -99.20145429780742)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0178.png']
+[(11.109447790443053, -99.20145429780742), (13.320689083748663, -99.19761671235295)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0179.png']
+[(13.320689083748663, -99.19761671235295), (16.014795014533505, -99.19319929291335)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0180.png']
+[(16.014795014533505, -99.19319929291335), (19.2117116396286, -99.17285932706531)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0181.png']
+[(19.2117116396286, -99.17285932706531), (22.74369805982503, -99.13980116051636)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0182.png']
+[(22.74369805982503, -99.13980116051636), (26.14751620914167, -99.12433637778044)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0183.png']
+[(26.14751620914167, -99.12433637778044), (28.904316706858065, -99.11716474691127)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0184.png']
+[(28.904316706858065, -99.11716474691127), (31.44823587292775, -99.10184492267165)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0185.png']
+[(31.44823587292775, -99.10184492267165), (33.02215501836513, -99.0959931770582)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0186.png']
+[(33.02215501836513, -99.0959931770582), (34.53694554728192, -99.08435072098764)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0187.png']
+[(34.53694554728192, -99.08435072098764), (36.23132119946083, -99.07666792068422)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0188.png']
+[(36.23132119946083, -99.07666792068422), (36.59130783678435, -99.07245649489721)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0189.png']
+[(36.59130783678435, -99.07245649489721), (36.59175799046037, -99.07244886550268)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0190.png']
+[(36.59175799046037, -99.07244886550268), (36.591506209161714, -99.07244886550268)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0191.png']
+[(36.591506209161714, -99.07244886550268), (36.72895606937949, -99.07273878249525)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0192.png']
+[(36.72895606937949, -99.07273878249525), (37.58752366124109, -99.06791700514493)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0193.png']
+[(37.58752366124109, -99.06791700514493), (39.15136200567262, -99.0589143195858)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0194.png']
+[(39.15136200567262, -99.0589143195858), (41.198411183705, -99.0441514411477)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0195.png']
+[(41.198411183705, -99.0441514411477), (43.41605764947471, -99.03302778390598)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0196.png']
+[(43.41605764947471, -99.03302778390598), (45.51995224586449, -99.0297166266749)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0197.png']
+[(45.51995224586449, -99.0297166266749), (47.73481385404111, -99.02352155830708)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0198.png']
+[(47.73481385404111, -99.02352155830708), (49.97251128973499, -99.00133527897998)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0199.png']
+[(49.97251128973499, -99.00133527897998), (51.833490058659194, -98.99153150699395)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0200.png']
+[(51.833490058659194, -98.99153150699395), (53.82938561308877, -98.91901411187558)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0201.png']
+[(53.82938561308877, -98.91901411187558), (55.940146978353496, -98.57712568367522)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0202.png']
+[(55.940146978353496, -98.57712568367522), (57.692024206597104, -97.85454572663566)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0203.png']
+[(57.692024206597104, -97.85454572663566), (59.267505542416274, -96.80163587412635)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0204.png']
+[(59.267505542416274, -96.80163587412635), (59.642492258800935, -96.48839582242988)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0205.png']
+[(59.642492258800935, -96.48839582242988), (59.64887835371225, -96.48072065152098)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0206.png']
+[(59.64887835371225, -96.48072065152098), (59.85492725101657, -96.19245160815933)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0207.png']
+[(59.85492725101657, -96.19245160815933), (60.43049615153502, -95.29848493213618)]
+['/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data/Town07_short/routes_town07_long_intersections_subsample_11_05_08_45_30/rgb_front/0208.png']
+[(60.43049615153502, -95.29848493213618), (60.58233952461896, -95.05803693376158)]

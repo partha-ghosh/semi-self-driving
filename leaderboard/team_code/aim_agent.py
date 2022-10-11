@@ -60,18 +60,25 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
         self.v2 = 0.2
 
         self.save_path = None
-        if SAVE_PATH is not None:
-            now = datetime.datetime.now()
-            string = pathlib.Path(os.environ['ROUTES']).stem + '_'
-            string += '_'.join(map(lambda x: '%02d' % x, (now.month, now.day, now.hour, now.minute, now.second)))
+        # if SAVE_PATH is not None:
+        #     now = datetime.datetime.now()
+        #     string = pathlib.Path(os.environ['ROUTES']).stem + '_'
+        #     string += '_'.join(map(lambda x: '%02d' % x, (now.month, now.day, now.hour, now.minute, now.second)))
 
-            print (string)
+        #     print (string)
 
-            self.save_path = pathlib.Path(os.environ['SAVE_PATH']) / string
-            self.save_path.mkdir(parents=True, exist_ok=False)
+        #     self.save_path = pathlib.Path(os.environ['SAVE_PATH']) / string
+        #     self.save_path.mkdir(parents=True, exist_ok=False)
 
-            (self.save_path / 'rgb').mkdir()
-            (self.save_path / 'meta').mkdir()
+        #     (self.save_path / 'rgb').mkdir()
+        #     (self.save_path / 'meta').mkdir()
+
+        now = datetime.datetime.now()
+        self.save_path2 = '_'.join(map(lambda x: '%02d' % x, (now.month, now.day, now.hour, now.minute, now.second)))
+        self.save_path2 = f'{self.config.test_dir}/scenes/{self.save_path2}'
+        print(self.save_path2)
+        os.system(f'mkdir -p {self.save_path2}/rgb')
+        os.system(f'mkdir -p {self.save_path2}/meta')
 
     def _init(self):
         self._route_planner = RoutePlanner(4.0, 50.0)
@@ -282,7 +289,8 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
         control.throttle = float(throttle)
         control.brake = float(brake)
 
-        if SAVE_PATH is not None and self.step % 10 == 0:
+        # if SAVE_PATH is not None and self.step % 10 == 0:
+        if self.step % 10 == 0:
             self.save(tick_data)
 
         return control
@@ -290,9 +298,9 @@ class AIMAgent(autonomous_agent.AutonomousAgent):
     def save(self, tick_data):
         frame = self.step // 10
 
-        Image.fromarray(tick_data[self.config.scene_type]).save(self.save_path / self.config.scene_type / ('%04d.png' % frame))
+        Image.fromarray(tick_data[self.config.scene_type]).save(f'{self.save_path2}/rgb/{str(frame).zfill(4)}.png')
 
-        outfile = open(self.save_path / 'meta' / ('%04d.json' % frame), 'w')
+        outfile = open(f'{self.save_path2}/meta/{str(frame).zfill(4)}.json', 'w')
         json.dump(self.pid_metadata, outfile, indent=4)
         outfile.close()
 

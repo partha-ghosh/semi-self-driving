@@ -2,7 +2,7 @@ from utils import *
 
 
 # data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/14_weathers_minimal_data'
-data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/new'
+data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/best'
 # data_path = '/mnt/qb/work/geiger/pghosh58/transfuser/data/transfuser_plus_data'
 # data_path = '/mnt/qb/geiger/kchitta31/datasets/carla/pami_v1_dataset_23_11'
 dest_path = f'/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_{data_path.split("/")[-1]}'
@@ -12,7 +12,7 @@ pred_len = 4
 
 
 towns = next(os.walk(data_path))[1]
-
+towns=['Town11_long']
 jobs = []
 for town in tqdm.tqdm(towns, desc='town'):
     routes = next(os.walk(f'{data_path}/{town}'))[1]

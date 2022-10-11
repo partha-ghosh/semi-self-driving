@@ -21,6 +21,8 @@ torch.backends.cudnn.benchmark = True
 from imgaug import augmenters as iaa
 import imageio
 import matplotlib.pyplot as plt
+import tqdm
+import sys
 import glob
 
 # device config
@@ -61,51 +63,38 @@ def normalize_imagenet(x):
     return x
 
 
-# imgaug = iaa.Sequential([
-#     	iaa.SomeOf((0, 1),
-#     	[
-# 			# iaa.AdditiveGaussianNoise(scale=0.2*255, per_channel=True),
-# 		    # iaa.Dropout(p=(0, 0.2)),
-# 			# iaa.SaltAndPepper(0.1),
-# 		], random_order=True),
-#     ])
-imgaug=None
-
-
 class MyDataset(Dataset):
 
     def __init__(self, datset_path, mode):
         # data loading
         data = glob.glob(f'{dataset_path}/**/*')
-        towns = ['Town01', 'Town02', 'Town03', 'Town04'] if mode=='train' else ['Town05']
+        towns = ['Town01', 'Town02', 'Town03', 'Town04', 'Town06', 'Town07', 'Town10', 'Town11']
         self.driving_scenes = []
         for d in data:
             if 'processed' in d:
                 if any([(town in d) for town in towns]):
-                    print(d)
+                    print(d, [(town in d) for town in towns])
                     town_data = np.load(d, allow_pickle=True)
                     self.driving_scenes.extend(town_data)
 
         self.driving_scenes_dict = {k['scene']:True for k in self.driving_scenes}
-
 
     def __getitem__(self, index):
         n = index
         # batch_size_choices = [1, 2, 4, 8, 16, 32, 64]
         # batch_size = np.random.choice(batch_size_choices)
         # n_seqs = 2*max(batch_size_choices)//batch_size        
-        n_seqs = 2
+        n_seqs = 30
 
         scene_names = [self.driving_scenes[n]['scene']] 
-        print(scene_names)
         t = int(scene_names[0][-8:-4])
-
+        
         for i in range(1, n_seqs):
             scene_names.append(scene_names[0].replace(str(t).zfill(4), str(t+i).zfill(4)))
         
         for scene_name in scene_names:
             if not self.driving_scenes_dict.get(scene_name, False):
-                return None,None
+                return None,None,None
         else:
             measurements = []
             abs_pos = []
@@ -120,33 +109,32 @@ class MyDataset(Dataset):
             for scene_name in scene_names:
                 scenes.append(torch.from_numpy(np.array(scale_and_crop_image(Image.open(scene_name), scale=1, crop=256))))
 
-            imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.png', scenes[-1])  #write all changed images
+            # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}.png', scenes[-1])  #write all changed images
             # imageio.imwrite(f'/mnt/qb/work/geiger/pghosh58/transfuser/vis/scenes/{index}scenetp1.jpg', scene_tp1)  #write all changed images
             
             for i in range(len(scenes)):
                 scenes[i] = scenes[i].permute(2,0,1).float()
 
-            return torch.cat([torch.cat([scenes[i-1], scenes[i]])[None,:,:,:] for i in range(1,len(scenes))]), abs_pos
+            return torch.cat([torch.cat([scenes[i-1], scenes[i]])[None,:,:,:] for i in range(1,len(scenes))]), abs_pos, scene_names[0]
 
     def __len__(self):
         return len(self.driving_scenes)
 
 def get_abs_pos(abs0, c0, s0, rel_trans):
     r1 = np.linalg.norm(rel_trans)
-    if r1:
-        c1, s1 = rel_trans/r1
-        
-        c0, s0 = c1*c0-s1*s0, c0*s1+s0*c1
+    c1, s1 = rel_trans/r1
+    
+    c0, s0 = c1*c0-s1*s0, c0*s1+s0*c1
 
     return abs0 + r1 * np.array([c0, s0])
 
 # CIFAR10
-dataset_path  = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_14_weathers_minimal_data'
+dataset_path  = '/mnt/qb/work/geiger/pghosh58/transfuser/data/filtered_best'
 train_dataset = MyDataset(dataset_path, 'train')
-test_dataset = MyDataset(dataset_path, 'test')
+# test_dataset = MyDataset(dataset_path, 'test')
 
-# train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=False)
-test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+# test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 
 class RelNet(nn.Module):
@@ -203,47 +191,41 @@ class RelNet(nn.Module):
 model = RelNet().to(device)
 
 try:
-    model.load_state_dict(torch.load('model.pth'))
-    model.eval()
-    print('model loaded')
+  model.load_state_dict(torch.load('model.pth'))
+  model.eval()
+  print('model loaded')
 except:
-    print('could not load the model')
+  pass
 
-pred_pos = [[0,0]]
-abs_pos = []
-start_index = 525
+M = np.array([[0, 1], [-1, 0]])
+pseudolabels = dict()
+
+j = 0
+
 with torch.no_grad():
-    for i in range(start_index,start_index+50):#len(test_dataset.driving_scenes)):
-        (scenes, ap) = test_dataset[i]
-        print(ap)
+    for k in tqdm.trange(int(sys.argv[2])+1):#len(train_dataset.driving_scenes)): #range(start_index,start_index+50)
+        (scenes, abs_pos, scene_name) = train_dataset[k+int(sys.argv[1])]
+        pred_pos = []
         # if scenes is not None:
         #     rel_x.append(rel_motions[0][0])
         #     rel_y.append(rel_motions[0][1])
         # if len(rel_x) == 5000:
         #     break
-        if scenes is not None:
-            if start_index==i:
-                z = torch.zeros((1,256)).to(device)
-            scenes = scenes.to(device)
+        
+        if scenes is None:
+            j = 0
+            continue
+        else:
+            j += 1
 
+        scenes = scenes.to(device)
+        z = torch.zeros((1,256)).to(device)
+
+        for i in range(max(len(scenes)-(j%30), 5)):
             #forward pass
-            output, z = model(scenes, z)
+            output, z = model(scenes[i], z)
             output = output.cpu().numpy()
-            # v = abs_pos[1]-abs_pos[0]
-            # v = v/np.linalg.norm(v)
-            # M = np.array([[v[0], v[1]], [-v[1], v[0]]])
-            # abs_pos = (M @ (abs_pos-abs_pos[0]).T).T + abs_pos[0]
-
-            # plt.plot(np.round(abs_pos[1:,0],2), np.round(abs_pos[1:,1],2), marker='.',label='gt')
-            # print(abs_pos)
-            # abs0 = abs_pos[1]
-            # pred_abs_pos = [abs0]
-            # c0,s0 = 1,0
-            # for x,y,c1,s1 in rel_translations:
-            #     abs0 = get_abs_pos(abs0, c0, s0, np.array([x,y]))
-            #     c0, s0 = c1, s1
-            #     pred_abs_pos.append(abs0)
-            if start_index == i:
+            if i == 0:
                 abs0 = np.array([0,0])
                 c0, s0 = 1, 0
             else:
@@ -252,21 +234,37 @@ with torch.no_grad():
                 c0, s0 = c0*c1-s0*s1, c0*s1+s0*c1
             pred_pos.append(abs0)
 
-            if start_index == i:
-                for x in ap:
-                    abs_pos.append(x)
-            else:
-                abs_pos.append(ap[1])
-        else:
-            break
+        pred_pos = np.array(pred_pos)
+        pred_pos = (M @ pred_pos.T).T
 
+        pseudolabels[scene_name] = {'scene':scene_name, 'waypoints': tuple(pred_pos[:5]), 'target_point': tuple(pred_pos[-1]), 'nav_command':np.zeros(6), 'v1':0, 'v2':0}
+        # print(scene_name, pseudolabels[scene_name])
+        # sys.stdout.flush()
+
+        # abs_pos = np.array(abs_pos)
+        # abs_pos = abs_pos - abs_pos[0]
+
+        # # theta =np.pi*(1+0.5)
+        # # M = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]])
+        # # abs_pos = (M @ abs_pos.T).T
+
+        # pred_pos = np.array(pred_pos)
+
+        # plt.figure()
+        # plt.plot(pred_pos[:,0], pred_pos[:,1], alpha=0.5, marker='.', label='pred_pos')
+        # plt.plot(abs_pos[:,0], abs_pos[:,1], alpha=0.5, marker='.', label='abs_pos')
+        # plt.legend()
+
+        # # plt.scatter(rel_x, rel_y, alpha=0.3)
+        # plt.savefig(f'img/{k}.png')
+
+np.save(f'psuedo_waypoints{sys.argv[1]}.npy', pseudolabels)
+exit()
 abs_pos = np.array(abs_pos)
 abs_pos = abs_pos - abs_pos[0]
-c0, s0 = abs_pos[1]/np.linalg.norm(abs_pos[1])
-M = np.array([[c0, s0], [-s0, c0]])
 
-# theta =np.pi*(2-0.5+1)
-# M = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]])
+theta =np.pi*(1+0.5)
+M = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]])
 abs_pos = (M @ abs_pos.T).T
 
 pred_pos = np.array(pred_pos)

@@ -36,18 +36,9 @@ def get_scenes(town_path):
     return scenes
 
 def get_measurements(scene):
-    try:
-        with open(scene.replace('png','json').replace('rgb_front','measurements'), 'r') as f:
-            data = json.load(f)
-    except:
-        data = dict(
-            x=0,
-            y=0,
-            theta=0,
-            x_command=0,
-            y_command=0,
-            command=1
-        )
+
+    with open(scene.replace('png','json').replace('rgb_front','measurements'), 'r') as f:
+        data = json.load(f)
     return data
 
 
@@ -98,6 +89,7 @@ def filter_data(path_to_npy, data):
     routes = dict()
 
     for item in processed_data:
+        item['waypoints']=[tuple(x) for x in item['waypoints']]
         route = '/'.join(item['scene'].split('/')[:-2])
         routes.setdefault(route, [])
         routes[route].append(item)

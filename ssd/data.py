@@ -50,7 +50,7 @@ class CARLA_Data(Dataset):
 
     def __getitem__(self, index):
         try:
-            mode = np.random.choice(['turns','in_motion','long_stops', 'short_stops'], p=[0.15, 0.3, 0.25, 0.3])
+            mode = np.random.choice(['turns','in_motion','long_stops', 'short_stops'], p=[0.25, 0.3, 0.25, 0.2])
             index = np.random.randint(0, len(self.data[mode]))
             item = self.data[mode][index]
             img = np.array(scale_and_crop_image(Image.open(item['scene']), scale=self.config['scale'], crop=self.config['input_resolution']))
